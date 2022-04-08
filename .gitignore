@@ -1,0 +1,45 @@
+# Virtual enviroment folder
+venv/
+
+/reports/
+# Emacs files
+*~
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Python egg metadata, regenerated from source files by setuptools.
+/*.egg-info
+/*.egg
+
+.eggs/
+
+# Build directory, just in case
+dist/
+
+# Mac OS X system files
+.DS_STORE
+
+# PyCharm files
+.idea
+
+# Personal Files
+docker-compose.local.yml
+build_dev.sh
+.env
+env
+
+# Compiled python modules.
+*.pyc
+
+# Setuptools distribution folder.
+/dist/
+
+build/
+
+~$*.xlsx
+~$*.xls
+~$*.csv
+
+.coverage
