@@ -39,7 +39,7 @@ from tempfile import NamedTemporaryFile
 
 import argparse as ap
 
-import fault_tree_generator as ft_gen
+import fault_tree_generator
 
 
 class Config(object):
@@ -126,7 +126,7 @@ def generate_input(normal, coherent, output_dir=None):
         if not coherent and random.choice([True, False]):
             weights += ["0.01", "0.1"]  # Add non-coherence
     cmd += weights
-    ft_gen.main(cmd)
+    fault_tree_generator.main(cmd)
     return input_file.name
 
 
