@@ -24,8 +24,7 @@ from unittest import TestCase
 from lxml import etree
 import pytest
 
-from fault_tree_generator import FactorError, Factors, generate_fault_tree, \
-    write_info, write_summary, main
+from generator.fault_tree_generator import FactorError, Factors, generate_fault_tree, write_info, write_summary, main
 
 # pylint: disable=redefined-outer-name
 
