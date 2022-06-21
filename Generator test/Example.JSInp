@@ -1,0 +1,455 @@
+{
+  "version": "1.0",
+  "saphiresolveinput": {
+    "header": {
+      "projectpath": "\"E:\\datadrive82\\NCState-NEUP Models\\Generic PWR Model -debug\"",
+      "eventtree": {
+        "name": "",
+        "number": 0,
+        "initevent": 0,
+        "seqphase": 1
+      },
+      "flagnum": 0,
+      "ftcount": 1,
+      "fthigh": 101,
+      "sqcount": 0,
+      "sqhigh": 0,
+      "becount": 25,
+      "behigh": 3903,
+      "mthigh": 1,
+      "phhigh": 1,
+      "truncparam": {
+        "ettruncopt": "NormalProbCutOff",
+        "fttruncopt": "GlobalProbCutOff",
+        "sizeopt": "ENoTrunc",
+        "ettruncval": 1.000E-13,
+        "fttruncval": 1.000E-10,
+        "sizeval": 99,
+        "transrepl": false,
+        "transzones": false,
+        "translevel": 0,
+        "usedual": false,
+        "dualcutoff": 0.000E+00
+      },
+      "workspacepair": {
+        "ph": 1,
+        "mt": 1
+      },
+      "iworkspacepair": {
+        "ph": 1,
+        "mt": 1
+      }
+    },
+    "sysgatelist": [
+      {
+        "name": "MFW-FT",
+        "id": 101,
+        "gateid": 180,
+        "gateorig": 180,
+        "gatepos": 0,
+        "eventid": 3487,
+        "gatecomp": 180,
+        "comppos": 0,
+        "compflag": " ",
+        "gateflag": " ",
+        "gatet": " ",
+        "bddsuccess": false,
+        "done": false
+      }
+      ],
+    "faulttreelist": [
+    {
+      "ftheader": {
+        "ftid": 101,
+        "gtid": 180,
+        "evid": 3487,
+        "defflag": 0,
+        "numgates": 4
+      },
+      "gatelist": [
+        {
+          "gateid": 180,
+          "gatetype": "or",
+          "numinputs": 5,
+          "gateinput": [
+             462,
+             622,
+             878
+          ],
+          "eventinput": [
+             3497,
+             3903
+          ]
+      },
+        {
+          "gateid": 462,
+          "gatetype": "or",
+          "numinputs": 6,
+          "eventinput": [
+             34,
+             74,
+             241,
+             242,
+             3006,
+             3827
+          ]
+      },
+        {
+          "gateid": 622,
+          "gatetype": "or",
+          "numinputs": 6,
+          "eventinput": [
+             312,
+             3738,
+             3817,
+             3818,
+             3819,
+             3820
+          ]
+      },
+        {
+          "gateid": 878,
+          "gatetype": "or",
+          "numinputs": 7,
+          "eventinput": [
+             78,
+             100,
+             101,
+             105,
+             116,
+             581,
+             582
+          ]
+      }
+      ]
+   }
+   ],
+  "eventlist": [
+    {
+    "id": "13",
+    "corrgate": "0",
+    "name": "<TRUE>",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 1.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "1"
+    },
+    {
+    "id": "14",
+    "corrgate": "0",
+    "name": "<FALSE>",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 0.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "1"
+    },
+    {
+    "id": "15",
+    "corrgate": "0",
+    "name": "<PASS>",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 1.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "1"
+    },
+    {
+    "id": "34",
+    "corrgate": "0",
+    "name": "HE-LODCA",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 0.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "F"
+    },
+    {
+    "id": "74",
+    "corrgate": "0",
+    "name": "HE-LODCB",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 0.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "F"
+    },
+    {
+    "id": "78",
+    "corrgate": "0",
+    "name": "HE-FLD-SWS",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 0.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "F"
+    },
+    {
+    "id": "100",
+    "corrgate": "0",
+    "name": "HE-FLD-SWSA",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 0.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "F"
+    },
+    {
+    "id": "101",
+    "corrgate": "0",
+    "name": "HE-FLD-SWSB",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 0.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "F"
+    },
+    {
+    "id": "105",
+    "corrgate": "0",
+    "name": "HE-FLD-4160VACA",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 0.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "F"
+    },
+    {
+    "id": "116",
+    "corrgate": "0",
+    "name": "HE-FLD-4160VACB",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 0.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "F"
+    },
+    {
+    "id": "241",
+    "corrgate": "0",
+    "name": "HE-LO4160ACA",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 0.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "F"
+    },
+    {
+    "id": "242",
+    "corrgate": "0",
+    "name": "HE-LO4160ACB",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 0.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "F"
+    },
+    {
+    "id": "312",
+    "corrgate": "0",
+    "name": "HE-EQ6",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 0.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "F"
+    },
+    {
+    "id": "581",
+    "corrgate": "0",
+    "name": "HE-FRI-AB-SIS",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 0.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "F"
+    },
+    {
+    "id": "582",
+    "corrgate": "0",
+    "name": "HE-FRI-SWS-BLD",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 0.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "F"
+    },
+    {
+    "id": "3006",
+    "corrgate": "0",
+    "name": "HE-SLOCA",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 0.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "F"
+    },
+    {
+    "id": "3487",
+    "corrgate": "180",
+    "name": "MFW-FT",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 1.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "1"
+    },
+    {
+    "id": "3497",
+    "corrgate": "0",
+    "name": "MFW-EQUIPMENT-FA",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 9.60000E-03,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "1"
+    },
+    {
+    "id": "3738",
+    "corrgate": "0",
+    "name": "HE-EQ1",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 0.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "F"
+    },
+    {
+    "id": "3817",
+    "corrgate": "0",
+    "name": "HE-EQ2",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 0.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "F"
+    },
+    {
+    "id": "3818",
+    "corrgate": "0",
+    "name": "HE-EQ3",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 0.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "F"
+    },
+    {
+    "id": "3819",
+    "corrgate": "0",
+    "name": "HE-EQ4",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 0.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "F"
+    },
+    {
+    "id": "3820",
+    "corrgate": "0",
+    "name": "HE-EQ5",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 0.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "F"
+    },
+    {
+    "id": "3827",
+    "corrgate": "0",
+    "name": "HE-SGTR",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 0.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "F"
+    },
+    {
+    "id": "3903",
+    "corrgate": "0",
+    "name": "MFW-XHE-XM-ERROR",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 4.00000E-02,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "1"
+    }
+  ]
+}
+}
