@@ -86,22 +86,21 @@ class BasicEvent(Event):
         printer('p(', self.name, ') = ', self.prob)
 
     def to_json(self, printer):
-       id_count = 1
-       # while id_count < 101:
-        # """Produces SaphSolver JSON definition of the basic event."""
-        # printer('"id": "', id_count, '",')
-        # printer('"corrgate": "0",')
-        # printer('"name": "', self.name, '",')
-        # printer('"evworkspacepair": {')
-        # printer('"ph": 1,')
-        # printer('"mt": 1,')
-        # printer('},')
-        # printer('"value": ', self.prob, ',')
-        # printer('"initf": "",')
-        # printer('"processf": "",')
-        # printer('"calctype": "1"')
-        # printer('}')
-        # id_count= id_count +1
+
+        """Produces SaphSolver JSON definition of the basic event."""
+        printer('"id": "', self.name.strip('B'), '",')
+        printer('"corrgate": "0",')
+        printer('"name": "', self.name, '",')
+        printer('"evworkspacepair": {')
+        printer('"ph": 1,')
+        printer('"mt": 1,')
+        printer('},')
+        printer('"value": ', self.prob, ',')
+        printer('"initf": "",')
+        printer('"processf": "",')
+        printer('"calctype": "1"')
+        printer('}')
+
 
 class HouseEvent(Event):
     """Representation of a house event in a fault tree.
@@ -230,6 +229,7 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
                 if gate.operator == "atleast":
                     mef_xml += " min=\"" + str(gate.k_num) + "\""
                 mef_xml += ">\n"
+            mef_xml += args_to_xml("house-event", gate.operator)
             mef_xml += args_to_xml("house-event", gate.h_arguments)
             mef_xml += args_to_xml("basic-event", gate.b_arguments)
             mef_xml += args_to_xml("event", gate.u_arguments)
@@ -243,10 +243,11 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
             if nest:
                 mef_xml += "".join(converter(x) for x in gate.g_arguments)
             else:
-                mef_xml += args_to_xml("sweet", gate.g_arguments)
+                mef_xml += args_to_xml("gate", gate.g_arguments)
 
             if gate.operator != "null":
                 mef_xml += "</" + gate.operator + ">"
+                printer("gatetype", gate.operator)
             return mef_xml
 
         printer('<define-gate name="', self.name, '">')
@@ -260,50 +261,74 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
             printer: The output stream.
             nest: Nesting of NOT connectives in formulas.
         """
+        # def arg_to_JSON(type_str, arg):
+        #     """Produces XML string representation of an argument."""
+        #     return "<%s name=\"%s\"/>\n" % (type_str, arg.name)
+        #
+        # def args_to_JSON(type_str, args):
+        #     """Produces XML string representation of arguments."""
+        #     return "".join(arg_to_JSON(type_str, arg) for arg in args)
+        #
 
         def arg_to_JSON(type_str, arg):
             """Produces JSON string representation of an argument."""
-            #return "<%s name=\"%s\"/>\n" % (type_str, arg.name)
-            return "%s [%s\"]\n" % (type_str, arg.name)
-        def args_to_JSON(type_str, args):
-            """Produces XML string representation of arguments."""
+            return "\"gatelist\": [\n{\n\"%s\":%s,\n"% (type_str, arg.name)
+            #return "\"gatelist\": [\n{\n\t\"gateid\":%s\n\"gatetype\":%s\n\"numinputs\":\n \"gateinput:\n [\n ]\n \"eveninput\": [\n}\n]\n" % (type_str, arg.name)
+            # return "\"gatelist\": [\n{\n\"gateid\":%s\n\"gatetype\":%s\n" % (type_str, arg.name)
+        def args_to_JSON(type_str,args):
+            """Produces JSON string representation of arguments."""
             return "".join(arg_to_JSON(type_str, arg) for arg in args)
 
+        # def arg_to_JSON_A(type_str, arg):
+        #     """Produces JSON string representation of an argument."""
+        #     #return "<%s name=\"%s\"/>\n" % (type_str, arg.name)
+        #     return "\"gatelist\": [\n{\n\t\"gateid\":%s\n\"gatetype\":%s\n\"numinputs\":\n \"gateinput:\n [\n ]\n \"eveninput\": [\n}\n]\n" % (type_str, arg.name)
+        # def args_to_JSON_A(type_str, args):
+        #     """Produces JSON string representation of arguments."""
+        #     return "".join(arg_to_JSON_A(type_str, arg) for arg in args)
+
         def convert_formula(gate, nest=False):
-            """Converts the formula of a gate into XML representation."""
-            mef_xml = ""
-            if gate.operator != "null":
-                mef_xml += "<" + gate.operator
-                if gate.operator == "atleast":
-                    mef_xml += " min=\"" + str(gate.k_num) + "\""
-                mef_xml += ">\n"
-            mef_xml += args_to_JSON("house-event", gate.h_arguments)
-            mef_xml += args_to_JSON('"eventinput:"', gate.b_arguments)
-            mef_xml += args_to_JSON("event", gate.u_arguments)
-
-            def converter(arg_gate):
-                """Converter for single nesting NOT connective."""
-                if gate.operator != "not" and arg_gate.operator == "not":
-                    return convert_formula(arg_gate)
-                return arg_to_JSON("hello", arg_gate)
-
-            if nest:
-                mef_xml += "".join(converter(x) for x in gate.g_arguments)
-            else:
-                mef_xml += args_to_JSON("gate", gate.g_arguments)
+            """Converts the formula of a gate into JSON representation."""
+            JSON_format = ""
+            # if gate.operator != "null":
+            #     JSON_format += "\"" + gate.operator
+            #     if gate.operator == "atleast":
+            #         JSON_format += " min=\"" + str(gate.k_num) + "\""
+            #     JSON_format += "\"\n"
+            # JSON_format += args_to_JSON( gate.h_arguments,gate.h_arguments)
+            g_num = gate.g_arguments
+            # strip_g = g_num.strip('G')
+            JSON_format += args_to_JSON("gateid", gate.g_arguments)
 
             if gate.operator != "null":
-                mef_xml += '"gatetype":"' + gate.operator + "\""
-            return mef_xml
+               JSON_format += '"gatetype":"' + gate.operator + "\"" + ',\n'
 
-        printer('"gatelist": [')
-        printer('{')
+            JSON_format += '"numinputs":"' + gate.operator + "\""
+            # JSON_format += args_to_JSON(gate.u_arguments)
+
+            # def converter(arg_gate):
+            #     """Converter for single nesting NOT connective."""
+            #     if gate.operator != "not" and arg_gate.operator == "not":
+            #         return convert_formula(arg_gate)
+            #     return arg_to_JSON(arg_gate)
+            #
+            # if nest:
+            #     JSON_format += "".join(converter(x) for x in gate.g_arguments)
+            # else:
+            #     JSON_format += args_to_JSON(gate.g_arguments)
+            #
+            # # if gate.operator != "null":
+            # #     JSON_format += '"gatetype":"' + gate.operator + "\""
+            return JSON_format
+
+        # printer('"gatelist": [')
+        # printer('{')
         printer(convert_formula(self, nest))
-        printer(']')
-        printer('}')
-        printer(']')
-        printer('}')
-        printer('],')
+        # printer(']')
+        # printer('}')
+        # printer(']')
+        # printer('}')
+        # printer('],')
         #printer('</define-gate>')
     def to_aralia(self, printer):
         """Produces the Aralia definition of the gate.
@@ -513,7 +538,7 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
 
         printer('"eventlist": [')
         printer('{')
-        printer('"id":', "9999999",',')
+        printer('"id":', '"99999"',',')
         printer('"corrgate": "0",')
         printer('"name": "', '"<TRUE>"', '",')
         printer('"evworkspacepair": {')
@@ -526,7 +551,7 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
         printer('"calctype": "1"')
         printer('}')
         printer('{')
-        printer('"id":', "9999998",',')
+        printer('"id":', '"99998"',',')
         printer('"corrgate": "0",')
         printer('"name": "', '"<FALSE>"', '",')
         printer('"evworkspacepair": {')
@@ -539,7 +564,7 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
         printer('"calctype": "1"')
         printer('}')
         printer('{')
-        printer('"id":', "9999997",',')
+        printer('"id":', '"99997"',',')
         printer('"corrgate": "0",')
         printer('"name": "', '"<PASS>"', '",')
         printer('"evworkspacepair": {')
@@ -552,9 +577,9 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
         printer('"calctype": "1"')
         printer('}')
         printer('{')
-        printer('"id":', "9999996",',')
+        printer('"id":', '"99996"',',')
         printer('"corrgate": "0",')
-        printer('"name": "', '"AUTOGENERATED"', '",')
+        printer('"name": "', "AUTOGENERATED", '",')
         printer('"evworkspacepair": {')
         printer('"ph": 1,')
         printer('"mt": 1,')
