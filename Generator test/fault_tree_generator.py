@@ -712,7 +712,7 @@ def write_info_JSON(fault_tree, printer, seed):
     printer('"sqhigh": 0,')
     printer('"becount":', 4 + factors.num_basic,",")
     #printer('"behigh":', max(len(basic_events)), ",")
-    printer('"behigh":', factors.num_basic, ",")
+    printer('"behigh":, "99996"')
     printer('"mthigh": 1,')
     printer('"phhigh": 1,')
     printer('"truncparam": {')
@@ -1034,7 +1034,7 @@ def main(argv=None):
     if args.aralia:
         fault_tree.to_aralia(printer)
     elif args.JSInp:
-        #write_info_JSON(fault_tree, printer, args.seed)
+        write_info_JSON(fault_tree, printer, args.seed)
         fault_tree.to_json(printer, args.nest)
         #write_summary(fault_tree, printer)
     else:
