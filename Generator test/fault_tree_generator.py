@@ -403,7 +403,7 @@ class GeneratorFaultTree(FaultTree):
         """
         basic_event = BasicEvent(
             "B" + str(len(self.basic_events) + 1),
-            random.uniform(self.factors.min_prob, self.factors.max_prob))
+            random.uniform(self.factors.min_prob, self.factors.max_prob),self.factors.num_basic)
         self.basic_events.append(basic_event)
         return basic_event
 
@@ -698,7 +698,7 @@ def write_info_JSON(fault_tree, printer, seed):
     printer('"version": "1.0",')
     printer('"saphiresolveinput": {')
     printer('"header": {')
-    printer('"projectpath": "\"E:\\datadrive82\\NCState-NEUP Models\\Generic PWR Model -debug\"",')
+    printer('"projectpath": "Edatadrive82NCState-NEUPModelsGenericPWR Model-debug",')
     printer('"eventtree": {')
     printer('"name": "",')
     printer('"number": 0,')
@@ -711,8 +711,9 @@ def write_info_JSON(fault_tree, printer, seed):
     printer('"sqcount": 0,')
     printer('"sqhigh": 0,')
     printer('"becount":', 4 + factors.num_basic,",")
-    #printer('"behigh":', max(len(basic_events)), ",")
-    printer('"behigh":, "99996"')
+    #printer('"behigh":', max(
+    # len(basic_events)), ",")
+    printer('"behigh": 99996,')
     printer('"mthigh": 1,')
     printer('"phhigh": 1,')
     printer('"truncparam": {')
@@ -736,18 +737,20 @@ def write_info_JSON(fault_tree, printer, seed):
     printer('"ph": 1,')
     printer('"mt": 1')
     printer('}')
+    printer('},')
     printer('"sysgatelist": [')
     printer('{')
-    printer('"name":','\"',fault_tree.name,'\"')
+    printer('"name":','\"',fault_tree.name,'\",')
     printer('"id": 139,')
-    printer('"gateid": 806,')
-    printer('"gateorig": 806,')
+    printer("gateid:", fault_tree.top_gate.name.strip('root'),",")
+    printer("gateorig:", fault_tree.top_gate.name.strip('root'),",")
     printer('"gatepos": 0,')
-    printer('"eventid": 490,')
-    printer('"gatecomp": 806,')
+    printer('"eventid": 99996,')
+    printer("gatecomp:", fault_tree.top_gate.name.strip('root'),",")
     printer('"comppos": 0,')
     printer('"compflag": " ",')
     printer('"gateflag": " ",')
+    printer('"gatet": " ",')
     printer('"bddsuccess": false,')
     printer('"done": false')
     printer('}')
@@ -756,12 +759,12 @@ def write_info_JSON(fault_tree, printer, seed):
     printer('{')
     printer('"ftheader": {')
     printer('"ftid": 139,')
-    printer('"gtid": 806,')
-    printer('"evid": 490,')
+    printer("gtid:", fault_tree.top_gate.name.strip('root'),',')
+    printer('"evid": 99996,')
     printer('"defflag": 0,')
-    printer('"numgates":',len(fault_tree.gates), ",")
+    printer('"numgates":',len(fault_tree.gates), "")
     printer('},')
-
+    printer('"gatelist": [')
 
 
 
@@ -900,7 +903,7 @@ def manage_cmd_args(argv=None):
     parser.add_argument("--root",
                         type=str,
                         help="name for the root gate",
-                        default="root",
+                        default=str("root80000"),
                         metavar="NCNAME")
     parser.add_argument("--seed",
                         type=int,
@@ -911,7 +914,7 @@ def manage_cmd_args(argv=None):
                         "--num-basic",
                         type=int,
                         help="# of basic events",
-                        default=100,
+                        default=50,
                         metavar="int")
     parser.add_argument("-a",
                         "--num-args",
