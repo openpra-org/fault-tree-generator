@@ -65,7 +65,7 @@ class BasicEvent(Event):
         prob: Probability of failure of this basic event.
     """
 
-    def __init__(self, name, prob):
+    def __init__(self, name, prob,num_basic):
         """Initializes a basic event node.
 
         Args:
@@ -74,6 +74,7 @@ class BasicEvent(Event):
         """
         super(BasicEvent, self).__init__(name)
         self.prob = prob
+        self.num_basic = num_basic
 
     def to_xml(self, printer):
         """Produces the Open-PSA MEF XML definition of the basic event."""
@@ -88,18 +89,22 @@ class BasicEvent(Event):
     def to_json(self, printer):
 
         """Produces SaphSolver JSON definition of the basic event."""
+        printer('{')
         printer('"id": "', self.name.strip('B'), '",')
         printer('"corrgate": "0",')
         printer('"name": "', self.name, '",')
         printer('"evworkspacepair": {')
         printer('"ph": 1,')
-        printer('"mt": 1,')
+        printer('"mt": 1')
         printer('},')
         printer('"value": ', self.prob, ',')
         printer('"initf": "",')
         printer('"processf": "",')
         printer('"calctype": "1"')
-        printer('}')
+        if int(self.name.strip('B')) == self.num_basic:
+              printer('}')
+        else:
+              printer('},')
 
 
 class HouseEvent(Event):
@@ -229,7 +234,6 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
                 if gate.operator == "atleast":
                     mef_xml += " min=\"" + str(gate.k_num) + "\""
                 mef_xml += ">\n"
-            mef_xml += args_to_xml("house-event", gate.operator)
             mef_xml += args_to_xml("house-event", gate.h_arguments)
             mef_xml += args_to_xml("basic-event", gate.b_arguments)
             mef_xml += args_to_xml("event", gate.u_arguments)
@@ -247,89 +251,81 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
 
             if gate.operator != "null":
                 mef_xml += "</" + gate.operator + ">"
-                printer("gatetype", gate.operator)
             return mef_xml
 
         printer('<define-gate name="', self.name, '">')
         printer(convert_formula(self, nest))
         printer('</define-gate>')
 
-    def to_JSON(self, printer, nest=False):
+    def to_JSON(self, printer, last=True):
         """Produces the JSON definition of the gate.
 
         Args:
             printer: The output stream.
             nest: Nesting of NOT connectives in formulas.
         """
-        # def arg_to_JSON(type_str, arg):
-        #     """Produces XML string representation of an argument."""
-        #     return "<%s name=\"%s\"/>\n" % (type_str, arg.name)
-        #
-        # def args_to_JSON(type_str, args):
-        #     """Produces XML string representation of arguments."""
-        #     return "".join(arg_to_JSON(type_str, arg) for arg in args)
-        #
 
         def arg_to_JSON(type_str, arg):
             """Produces JSON string representation of an argument."""
-            return "\"gatelist\": [\n{\n\"%s\":%s,\n"% (type_str, arg.name)
-            #return "\"gatelist\": [\n{\n\t\"gateid\":%s\n\"gatetype\":%s\n\"numinputs\":\n \"gateinput:\n [\n ]\n \"eveninput\": [\n}\n]\n" % (type_str, arg.name)
-            # return "\"gatelist\": [\n{\n\"gateid\":%s\n\"gatetype\":%s\n" % (type_str, arg.name)
+            return "%s\":%s,\n" % (type_str, arg.name)
         def args_to_JSON(type_str,args):
             """Produces JSON string representation of arguments."""
             return "".join(arg_to_JSON(type_str, arg) for arg in args)
 
-        # def arg_to_JSON_A(type_str, arg):
-        #     """Produces JSON string representation of an argument."""
-        #     #return "<%s name=\"%s\"/>\n" % (type_str, arg.name)
-        #     return "\"gatelist\": [\n{\n\t\"gateid\":%s\n\"gatetype\":%s\n\"numinputs\":\n \"gateinput:\n [\n ]\n \"eveninput\": [\n}\n]\n" % (type_str, arg.name)
-        # def args_to_JSON_A(type_str, args):
-        #     """Produces JSON string representation of arguments."""
-        #     return "".join(arg_to_JSON_A(type_str, arg) for arg in args)
+        def gate_name_to_number(arg):
+            return "%s,\n" % (arg.name.strip('G'))
+        def gate_name_to_number_last(arg):
+            return "%s\n" % (arg.name.strip('G'))
 
-        def convert_formula(gate, nest=False):
-            """Converts the formula of a gate into JSON representation."""
+        def basic_name_to_number(arg):
+            return "%s,\n" % (arg.name.strip('B'))
+        def basic_name_to_number_last(arg):
+            return "%s\n" % (arg.name.strip('B'))
+
+
+        def convert_formula(gate, last=False):
+            """Converts the formula of a gate into SAPHIRE JSON representation."""
             JSON_format = ""
-            # if gate.operator != "null":
-            #     JSON_format += "\"" + gate.operator
-            #     if gate.operator == "atleast":
-            #         JSON_format += " min=\"" + str(gate.k_num) + "\""
-            #     JSON_format += "\"\n"
-            # JSON_format += args_to_JSON( gate.h_arguments,gate.h_arguments)
-            g_num = gate.g_arguments
-            # strip_g = g_num.strip('G')
-            JSON_format += args_to_JSON("gateid", gate.g_arguments)
-
             if gate.operator != "null":
-               JSON_format += '"gatetype":"' + gate.operator + "\"" + ',\n'
+                JSON_format += "\"gatetype\":\"" + gate.operator
+                if gate.operator == "atleast":
+                    JSON_format += " min=\"" + str(gate.k_num) + "\""
+                JSON_format += "\",\n"
+            num_g = int(str(len(gate.g_arguments)))
+            num_b = int(str(len(gate.b_arguments)))
+            total_num = num_g + num_b
 
-            JSON_format += '"numinputs":"' + gate.operator + "\""
-            # JSON_format += args_to_JSON(gate.u_arguments)
+            JSON_format += '"numinputs":"' + str(total_num) + "\",\n"
+            if gate.g_arguments:
+                JSON_format += "\"gateinput\": [\n"
+                for i in gate.g_arguments:
+                    num = list(gate.g_arguments)
+                    if i == num[-1]:
+                        JSON_format += gate_name_to_number_last(i)
+                    else:
+                        JSON_format += gate_name_to_number( i)
+                if gate.b_arguments:
+                    JSON_format += "],\n"
+                else:
+                    JSON_format += "]"
 
-            # def converter(arg_gate):
-            #     """Converter for single nesting NOT connective."""
-            #     if gate.operator != "not" and arg_gate.operator == "not":
-            #         return convert_formula(arg_gate)
-            #     return arg_to_JSON(arg_gate)
-            #
-            # if nest:
-            #     JSON_format += "".join(converter(x) for x in gate.g_arguments)
-            # else:
-            #     JSON_format += args_to_JSON(gate.g_arguments)
-            #
-            # # if gate.operator != "null":
-            # #     JSON_format += '"gatetype":"' + gate.operator + "\""
+            if gate.b_arguments:
+                JSON_format += "\"eventinput\": [\n"
+                for i in gate.b_arguments:
+                    num = list(gate.b_arguments)
+                    if i == num[-1]:
+                        JSON_format += basic_name_to_number_last(i)
+                    else:
+                        JSON_format += basic_name_to_number( i)
+                JSON_format += "]"
             return JSON_format
 
-        # printer('"gatelist": [')
-        # printer('{')
-        printer(convert_formula(self, nest))
-        # printer(']')
-        # printer('}')
-        # printer(']')
-        # printer('}')
-        # printer('],')
-        #printer('</define-gate>')
+        printer('{')
+        printer('\"gateid\":', self.name.strip('root'), ",")
+        printer(convert_formula(self, last))
+
+
+
     def to_aralia(self, printer):
         """Produces the Aralia definition of the gate.
 
@@ -514,83 +510,82 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
             house_event.to_aralia(printer)
 
     def to_json(self, printer, nest=False):
-        """Produces the Open-PSA MEF XML definition of the fault tree.
+        """Produces SAPHIRE JSON definition of the fault tree.
 
         The fault tree is produced breadth-first.
-        The output XML representation is not formatted for human readability.
+        The output SAPHIRE JSON representation is not formatted for human readability.
         The fault tree must be valid and well-formed.
 
         Args:
             printer: The output stream.
             nest: A nesting factor for the Boolean formulae.
         """
-        #printer('<opsa-mef>')
-        #printer('<define-fault-tree name="', self.name, '">')
 
         sorted_gates = toposort_gates(self.top_gates or [self.top_gate],
                                       self.gates)
         for gate in sorted_gates:
             gate.to_JSON(printer, nest)
+            if gate == sorted_gates[-1]:
+                printer("}")
+            else:
+                printer("},")
 
-        #for ccf_group in self.ccf_groups:
-         #   ccf_group.to_xml(printer)
-        #printer('</define-fault-tree>')
-
+        printer(']')
+        printer('}')
+        printer('],')
         printer('"eventlist": [')
         printer('{')
         printer('"id":', '"99999"',',')
         printer('"corrgate": "0",')
-        printer('"name": "', '"<TRUE>"', '",')
+        printer('"name": "', '<TRUE>', '",')
         printer('"evworkspacepair": {')
         printer('"ph": 1,')
-        printer('"mt": 1,')
+        printer('"mt": 1')
         printer('},')
         printer('"value": ', 1.00000E+00, ',')
         printer('"initf": "",')
         printer('"processf": "",')
         printer('"calctype": "1"')
-        printer('}')
+        printer('},')
         printer('{')
         printer('"id":', '"99998"',',')
         printer('"corrgate": "0",')
-        printer('"name": "', '"<FALSE>"', '",')
+        printer('"name": "', '<FALSE>', '",')
         printer('"evworkspacepair": {')
         printer('"ph": 1,')
-        printer('"mt": 1,')
+        printer('"mt": 1')
         printer('},')
         printer('"value": ', 0.00000E+00, ',')
         printer('"initf": "",')
         printer('"processf": "",')
         printer('"calctype": "1"')
-        printer('}')
+        printer('},')
         printer('{')
         printer('"id":', '"99997"',',')
         printer('"corrgate": "0",')
-        printer('"name": "', '"<PASS>"', '",')
+        printer('"name": "', '<PASS>', '",')
         printer('"evworkspacepair": {')
         printer('"ph": 1,')
-        printer('"mt": 1,')
+        printer('"mt": 1')
         printer('},')
         printer('"value": ', 1.00000E+00, ',')
         printer('"initf": "",')
         printer('"processf": "",')
         printer('"calctype": "1"')
-        printer('}')
+        printer('},')
         printer('{')
         printer('"id":', '"99996"',',')
         printer('"corrgate": "0",')
         printer('"name": "', "AUTOGENERATED", '",')
         printer('"evworkspacepair": {')
         printer('"ph": 1,')
-        printer('"mt": 1,')
+        printer('"mt": 1')
         printer('},')
         printer('"value": ', 1.00000E+00, ',')
         printer('"initf": "",')
         printer('"processf": "",')
         printer('"calctype": "1"')
-        printer('}')
-        printer('}')
-        printer('{')
+        printer('},')
         for basic_event in (self.non_ccf_events
                             if self.ccf_groups else self.basic_events):
             basic_event.to_json(printer)
@@ -598,10 +593,6 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
         printer('}')
         printer('}')
 
-        #for house_event in self.house_events:
-         #   house_event.to_xml(printer)
-        #printer('</model-data>')
-        #printer('</opsa-mef>')
 
 
 def toposort_gates(root_gates, gates):
