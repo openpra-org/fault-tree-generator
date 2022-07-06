@@ -321,7 +321,7 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
             return JSON_format
 
         printer('{')
-        printer('\"gateid\":', self.name.strip('root'), ",")
+        printer('\"gateid\":', self.name.strip('Groot'), ",")
         printer(convert_formula(self, last))
 
 
