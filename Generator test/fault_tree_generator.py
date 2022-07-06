@@ -742,11 +742,11 @@ def write_info_JSON(fault_tree, printer, seed):
     printer('{')
     printer('"name":','\"',fault_tree.name,'\",')
     printer('"id": 139,')
-    printer("gateid:", fault_tree.top_gate.name.strip('root'),",")
-    printer("gateorig:", fault_tree.top_gate.name.strip('root'),",")
+    printer('"gateid":', fault_tree.top_gate.name.strip('root'),",")
+    printer('"gateorig":', fault_tree.top_gate.name.strip('root'),",")
     printer('"gatepos": 0,')
     printer('"eventid": 99996,')
-    printer("gatecomp:", fault_tree.top_gate.name.strip('root'),",")
+    printer('"gatecomp":', fault_tree.top_gate.name.strip('root'),",")
     printer('"comppos": 0,')
     printer('"compflag": " ",')
     printer('"gateflag": " ",')
@@ -759,7 +759,7 @@ def write_info_JSON(fault_tree, printer, seed):
     printer('{')
     printer('"ftheader": {')
     printer('"ftid": 139,')
-    printer("gtid:", fault_tree.top_gate.name.strip('root'),',')
+    printer('"gtid":', fault_tree.top_gate.name.strip('root'),',')
     printer('"evid": 99996,')
     printer('"defflag": 0,')
     printer('"numgates":',len(fault_tree.gates), "")
@@ -914,7 +914,7 @@ def manage_cmd_args(argv=None):
                         "--num-basic",
                         type=int,
                         help="# of basic events",
-                        default=50,
+                        default=100,
                         metavar="int")
     parser.add_argument("-a",
                         "--num-args",
