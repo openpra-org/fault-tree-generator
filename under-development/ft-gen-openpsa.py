@@ -31,8 +31,9 @@ random.seed(123)
 gateList = ['or','and']
 gateListOR = ['or']
 gateListAND = ['and']
-n = 1000
-while (n<=50000):
+failureProb = 0.05
+n = 5
+while (n<=5):
 
     def configFileGenXFTA(name):
 
@@ -58,9 +59,9 @@ while (n<=50000):
                 #gate = ET.SubElement(gateType, 'gate', {'name': 'g' + str(gateNumber + 1)})
 
                 basicEventValue1 = ET.SubElement(modelData, 'define-basic-event', {'name': 'be' + str(gateNumber)})
-                basicEventValu1Assign = ET.SubElement(basicEventValue1, 'float', {'value': str(0.05)})
+                basicEventValu1Assign = ET.SubElement(basicEventValue1, 'float', {'value': str(failureProb)})
                 basicEventValue2 = ET.SubElement(modelData, 'define-basic-event', {'name': 'bee' + str(gateNumber)})
-                basicEventValu2Assign = ET.SubElement(basicEventValue2, 'float', {'value': str(0.05)})
+                basicEventValu2Assign = ET.SubElement(basicEventValue2, 'float', {'value': str(failureProb)})
             elif gateNumber%2 ==0:
                 defineGate = ET.SubElement(faultTreeName, 'define-gate', {'name': 'g' + str(gateNumber)})
                 gateType = ET.SubElement(defineGate, random.choice(gateListAND))
@@ -69,9 +70,9 @@ while (n<=50000):
                 gate = ET.SubElement(gateType, 'gate', {'name': 'g' + str(gateNumber + 1)})
 
                 basicEventValue1 = ET.SubElement(modelData, 'define-basic-event', {'name': 'be' + str(gateNumber)})
-                basicEventValu1Assign = ET.SubElement(basicEventValue1, 'float', {'value': str(0.05)})
+                basicEventValu1Assign = ET.SubElement(basicEventValue1, 'float', {'value': str(failureProb)})
                 basicEventValue2 = ET.SubElement(modelData, 'define-basic-event', {'name': 'bee' + str(gateNumber)})
-                basicEventValu2Assign = ET.SubElement(basicEventValue2, 'float', {'value': str(0.05)})
+                basicEventValu2Assign = ET.SubElement(basicEventValue2, 'float', {'value': str(failureProb)})
             else:
                 defineGate = ET.SubElement(faultTreeName, 'define-gate', {'name': 'g' + str(gateNumber)})
                 gateType = ET.SubElement(defineGate, random.choice(gateListOR))
@@ -80,9 +81,9 @@ while (n<=50000):
                 gate = ET.SubElement(gateType, 'gate', {'name': 'g' + str(gateNumber + 1)})
 
                 basicEventValue1 = ET.SubElement(modelData, 'define-basic-event', {'name': 'be' + str(gateNumber)})
-                basicEventValu1Assign = ET.SubElement(basicEventValue1, 'float', {'value': str(0.05)})
+                basicEventValu1Assign = ET.SubElement(basicEventValue1, 'float', {'value': str(failureProb)})
                 basicEventValue2 = ET.SubElement(modelData, 'define-basic-event', {'name': 'bee' + str(gateNumber)})
-                basicEventValu2Assign = ET.SubElement(basicEventValue2, 'float', {'value': str(0.05)})
+                basicEventValu2Assign = ET.SubElement(basicEventValue2, 'float', {'value': str(failureProb)})
 
 
 
@@ -94,4 +95,4 @@ while (n<=50000):
         configFileGenXFTA('ft-openpsa-'+str(n)+'Gates.xml')
         # runXFTA(pathXFTAModels + " " + "xfta-ft-openpsa-"+str(n)+"Gates.xml")
         # runSCRAM('ft-openpsa-'+str(n)+'Gates.xml')
-    n+=1000
+    n+=1

@@ -10,7 +10,7 @@ import random
 random.seed(123)
 
 numGates = 1000
-while(numGates<=50000):
+while(numGates<=5000):
     def ftGenSaphire(fileName):
 
     #"""reading the json file from sample base"""
@@ -41,8 +41,8 @@ while(numGates<=50000):
         truncETTRun = ettruncopt[0] #default 1, pick from the list
         truncFTTRun = fttruncopt[0] #default 1, pick from the list
         truncSizePpt = sizeopt[0] #default 1, pick from the list
-        truncETTruncval = pow(10,-14) #benchmark value
-        truncFTTruncval = pow(10,-14) #benchmark value
+        truncETTruncval = pow(10,-80) #benchmark value
+        truncFTTruncval = pow(10,-80) #benchmark value
         truncSizeval = 99 # default
         truncTransrepl = False # default
         truncTranszones = False # default
@@ -96,19 +96,19 @@ while(numGates<=50000):
                 gateList[ftheaderNumGates]['gateid'] = ftheaderNumGates + 1
                 gateList[ftheaderNumGates]['gatetype'] = random.choice(gatelistGateTypeListOR)
                 gateList[ftheaderNumGates]['numinputs'] = random.choice(gatelistNumInputsList)
-                gateList[ftheaderNumGates]['eventinput'] = [100 + ftheaderNumGates, 1000 + ftheaderNumGates]
+                gateList[ftheaderNumGates]['eventinput'] = [100 + ftheaderNumGates, 100000 + ftheaderNumGates]
                 gateList[ftheaderNumGates]['gateinput'] = [ftheaderNumGates + 1 + 1]
             else:
                 gateList[ftheaderNumGates]['gateid'] = ftheaderNumGates + 1
                 gateList[ftheaderNumGates]['gatetype'] = random.choice(gatelistGateTypeListAND)
                 gateList[ftheaderNumGates]['numinputs'] = random.choice(gatelistNumInputsList)
-                gateList[ftheaderNumGates]['eventinput'] = [100 + ftheaderNumGates, 1000 + ftheaderNumGates]
+                gateList[ftheaderNumGates]['eventinput'] = [100 + ftheaderNumGates, 100000 + ftheaderNumGates]
                 gateList[ftheaderNumGates]['gateinput'] = [ftheaderNumGates + 1 + 1]
             if gateList[ftheaderNumGates]['gateid'] == numGates:
                 gateList[ftheaderNumGates]['gateid'] = ftheaderNumGates + 1
                 gateList[ftheaderNumGates]['gatetype'] = random.choice(gatelistGateTypeListAND)
                 gateList[ftheaderNumGates]['numinputs'] = random.choice(gatelistNumInputsList) - 1
-                gateList[ftheaderNumGates]['eventinput'] = [100 + ftheaderNumGates, 1000 + ftheaderNumGates]
+                gateList[ftheaderNumGates]['eventinput'] = [100 + ftheaderNumGates, 100000 + ftheaderNumGates]
                 del gateList[ftheaderNumGates]['gateinput']
 
             dictCopy = gateList[ftheaderNumGates].copy()
