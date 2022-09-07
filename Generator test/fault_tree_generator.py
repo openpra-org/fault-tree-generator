@@ -686,7 +686,7 @@ def write_info(fault_tree, printer, seed):
     printer('-->')
 
 def write_info_JSON(fault_tree, printer, seed):
-    """Writes the information about the setup for fault tree generation.
+    """Writes the information about the setup for fault tree generation in SAPHIRE Json format.
 
     Args:
         fault_tree: A full, valid, well-formed fault tree.
@@ -767,8 +767,16 @@ def write_info_JSON(fault_tree, printer, seed):
     printer('"gatelist": [')
 
 
+def write_info_OpenPRA_JSON(fault_tree, printer, seed):
+    """Writes the information about the setup for fault tree generation in OpenPRA Json format.
 
-
+    Args:
+        fault_tree: A full, valid, well-formed fault tree.
+        printer: The output stream.
+        seed: The seed of the pseudo-random number generator.
+    """
+    factors = fault_tree.factors
+    printer('{')
 
 
 
@@ -984,7 +992,10 @@ def manage_cmd_args(argv=None):
                         help="apply the Aralia format to the output")
     parser.add_argument("--JSInp",
                         action="store_true",
-                        help="apply the JSON format to the output")
+                        help="apply the SAPHIRE JSON format to the output")
+    parser.add_argument("--json",
+                        action="store_true",
+                        help="apply the OpenPRA JSON format to the output")
     parser.add_argument("--nest",
                         action="store_true",
                         help="nest NOT connectives in Boolean formulae")
@@ -1039,6 +1050,10 @@ def main(argv=None):
     elif args.JSInp:
         write_info_JSON(fault_tree, printer, args.seed)
         fault_tree.to_json(printer, args.nest)
+        #write_summary(fault_tree, printer)
+    elif args.json:
+        write_info_OpenPRA_JSON(fault_tree, printer, args.seed)
+        fault_tree.to_OpenPRA_json(printer, args.nest)
         #write_summary(fault_tree, printer)
     else:
         write_info(fault_tree, printer, args.seed)

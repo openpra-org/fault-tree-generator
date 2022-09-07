@@ -106,6 +106,24 @@ class BasicEvent(Event):
         else:
               printer('},')
 
+    def to_OpenPRA_json(self, printer):
+        """Produces OpenPRA JSON definition of the basic event."""
+        printer('"', self.name, '": {')
+        printer('"role": "public",')
+        printer('"label": {')
+        printer('"name": "Basic Event",')
+        printer('"description": ""')
+        printer('},')
+        printer('"expression": {')
+        printer('"value": ', self.prob, ',')
+        printer('"_proxy": "Float"')
+        printer('},')
+        printer('"source_type": "hcl"')
+        if int(self.name.strip('B')) == self.num_basic:
+              printer('}')
+        else:
+              printer('},')
+
 
 class HouseEvent(Event):
     """Representation of a house event in a fault tree.
@@ -324,7 +342,105 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
         printer('\"gateid\":', self.name.strip('Groot'), ",")
         printer(convert_formula(self, last))
 
+    def to_OpenPRA_JSON(self, printer, last=True):
+        """Produces the OpenPRA JSON definition of the gate.
 
+        Args:
+            printer: The output stream.
+            nest: Nesting of NOT connectives in formulas.
+        """
+
+        def arg_to_JSON(type_str, arg):
+            """Produces JSON string representation of an argument."""
+            return "%s\":%s,\n" % (type_str, arg.name)
+        def args_to_JSON(type_str,args):
+            """Produces JSON string representation of arguments."""
+            return "".join(arg_to_JSON(type_str, arg) for arg in args)
+
+        def gate_name_to_number(arg):
+            return "%s" % (arg.name)
+        def gate_name_to_number_last(arg):
+            return "%s" % (arg.name)
+
+        def basic_name_to_number(arg):
+            return "%s" % (arg.name)
+        def basic_name_to_number_last(arg):
+            return "%s" % (arg.name)
+
+
+        def convert_formula(gate, last=False):
+            """Converts the formula of a gate into SAPHIRE JSON representation."""
+            # capital_gate = upper(gate.opertaor)
+            OpenPRA_JSON_format = ""
+            if gate.operator != "null":
+                OpenPRA_JSON_format += "\"name\":\"" + str.upper(gate.operator) + " Gate" + "\"\n" + '"description":""\n },'
+                if gate.operator == "atleast":
+                    OpenPRA_JSON_format += " min=\"" + str(gate.k_num) + "\""
+                OpenPRA_JSON_format += "\n"
+            num_g = int(str(len(gate.g_arguments)))
+            num_b = int(str(len(gate.b_arguments)))
+            total_num = num_g + num_b
+
+            OpenPRA_JSON_format += '"formula": {\n'
+            OpenPRA_JSON_format += '"formulas": [\n'
+            # OpenPRA_JSON_format += '{\n'
+
+            if gate.g_arguments:
+                # OpenPRA_JSON_format += "\"gateinput\": [\n"
+                for i in gate.g_arguments:
+                    num = list(gate.g_arguments)
+                    if i == num[-1]:
+                        OpenPRA_JSON_format +=  "{\n"
+                        OpenPRA_JSON_format += "\"name\":" + "\"" + gate_name_to_number_last(i) + "\"\n"
+                        OpenPRA_JSON_format += '"reference_type": "gates",\n'
+                        OpenPRA_JSON_format += '"tree_id": 47,\n'
+                        OpenPRA_JSON_format += '"path": "",\n'
+                        OpenPRA_JSON_format += '"_proxy": "EventReference"\n'
+                        OpenPRA_JSON_format += "}\n"
+                    else:
+                        OpenPRA_JSON_format += "{\n"
+                        OpenPRA_JSON_format += "\"name\":" + "\"" + gate_name_to_number(i) + "\"\n"
+                        OpenPRA_JSON_format += '"reference_type": "gates",\n'
+                        OpenPRA_JSON_format += '"tree_id": 47,\n'
+                        OpenPRA_JSON_format += '"path": "",\n'
+                        OpenPRA_JSON_format += '"_proxy": "EventReference"\n'
+                        OpenPRA_JSON_format += "},\n"
+                if gate.b_arguments:
+                    OpenPRA_JSON_format += ""
+                else:
+                    OpenPRA_JSON_format += "]"
+
+            if gate.b_arguments:
+                # OpenPRA_JSON_format += "\"eventinput\": [\n"
+                for i in gate.b_arguments:
+                    num = list(gate.b_arguments)
+                    if i == num[-1]:
+                        OpenPRA_JSON_format += "{\n"
+                        OpenPRA_JSON_format += "\"name\":" + "\"" + basic_name_to_number_last(i) + "\"\n"
+                        OpenPRA_JSON_format += '"reference_type": "basic_events",\n'
+                        OpenPRA_JSON_format += '"tree_id": 47,\n'
+                        OpenPRA_JSON_format += '"path": "",\n'
+                        OpenPRA_JSON_format += '"_proxy": "EventReference"\n'
+                        OpenPRA_JSON_format += "}\n"
+                    else:
+                        OpenPRA_JSON_format += "{\n"
+                        OpenPRA_JSON_format += "\"name\":" + "\"" + basic_name_to_number(i) + "\"\n"
+                        OpenPRA_JSON_format += '"reference_type": "basic_events",\n'
+                        OpenPRA_JSON_format += '"tree_id": 47,\n'
+                        OpenPRA_JSON_format += '"path": "",\n'
+                        OpenPRA_JSON_format += '"_proxy": "EventReference"\n'
+                        OpenPRA_JSON_format += "},\n"
+                OpenPRA_JSON_format += "],"
+            OpenPRA_JSON_format += "\nexpr" + ':"' + gate.operator + '"\n'
+            OpenPRA_JSON_format += '"_proxy": "LogicalExpression"\n'
+            OpenPRA_JSON_format += "}"
+            return OpenPRA_JSON_format
+
+
+        printer('"',self.name.strip('root'),'":', "{")
+        printer('"role": "public",')
+        printer('"label": {')
+        printer(convert_formula(self, last))
 
     def to_aralia(self, printer):
         """Produces the Aralia definition of the gate.
@@ -592,6 +708,50 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
         printer(']')
         printer('}')
         printer('}')
+
+    def to_OpenPRA_json(self, printer, nest=False):
+        """Produces SAPHIRE JSON definition of the fault tree.
+
+        The fault tree is produced breadth-first.
+        The output SAPHIRE JSON representation is not formatted for human readability.
+        The fault tree must be valid and well-formed.
+
+        Args:
+            printer: The output stream.
+            nest: A nesting factor for the Boolean formulae.
+        """
+        printer('"basic_events": {')
+        for basic_event in (self.non_ccf_events
+                            if self.ccf_groups else self.basic_events):
+            basic_event.to_OpenPRA_json(printer)
+        printer('},')
+        printer('"house_events": {},')
+        printer('"gates": {')
+        sorted_gates = toposort_gates(self.top_gates or [self.top_gate],
+                                      self.gates)
+        for gate in sorted_gates:
+            gate.to_OpenPRA_JSON(printer, nest)
+            if gate == sorted_gates[-1]:
+                printer("}")
+            else:
+                printer("},")
+        printer('"top_node": {')
+        printer('"components": {')
+        printer('"name": "80000",')
+        printer('"reference_type": "gates",')
+        printer('"tree_id": 47,')
+        printer('"path": "",')
+        printer('"_proxy": "EventReference"')
+        printer('},')
+        printer('"name": "test2",')
+        printer('"model_tree_id": 47,')
+        printer('"label": {')
+        printer('"name": "test2",')
+        printer('"description": ""')
+        printer('}')
+        printer('}')
+
+
 
 
 
