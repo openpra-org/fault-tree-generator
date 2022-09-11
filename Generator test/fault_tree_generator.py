@@ -990,10 +990,10 @@ def manage_cmd_args(argv=None):
     parser.add_argument("--aralia",
                         action="store_true",
                         help="apply the Aralia format to the output")
-    parser.add_argument("--JSInp",
+    parser.add_argument("--SAPHIRE_json",
                         action="store_true",
                         help="apply the SAPHIRE JSON format to the output")
-    parser.add_argument("--json",
+    parser.add_argument("--OpenPRA_json",
                         action="store_true",
                         help="apply the OpenPRA JSON format to the output")
     parser.add_argument("--nest",
@@ -1047,11 +1047,11 @@ def main(argv=None):
     printer = get_printer(args.out)
     if args.aralia:
         fault_tree.to_aralia(printer)
-    elif args.JSInp:
+    elif args.SAPHIRE_json:
         write_info_JSON(fault_tree, printer, args.seed)
-        fault_tree.to_json(printer, args.nest)
+        fault_tree.to_SAPHIRE_json(printer, args.nest)
         #write_summary(fault_tree, printer)
-    elif args.json:
+    elif args.OpenPRA_json:
         write_info_OpenPRA_JSON(fault_tree, printer, args.seed)
         fault_tree.to_OpenPRA_json(printer, args.nest)
         #write_summary(fault_tree, printer)
