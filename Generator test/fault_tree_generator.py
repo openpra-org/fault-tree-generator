@@ -922,7 +922,7 @@ def manage_cmd_args(argv=None):
                         "--num-basic",
                         type=int,
                         help="# of basic events",
-                        default=100,
+                        default=1000,
                         metavar="int")
     parser.add_argument("-a",
                         "--num-args",
