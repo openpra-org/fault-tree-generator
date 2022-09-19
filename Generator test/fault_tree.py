@@ -88,7 +88,7 @@ class BasicEvent(Event):
 
     def to_SAPHIRE_json(self, printer):
 
-        """Produces SaphSolver JSON definition of the basic event."""
+        """Produces SaphSolver JSON definition of the basic event"""
         printer('{')
         printer('"id": "', self.name.strip('B'), '",')
         printer('"corrgate": "0",')
