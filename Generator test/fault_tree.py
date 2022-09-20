@@ -15,7 +15,7 @@
 """Fault tree classes and common facilities."""
 
 from collections import deque
-
+import json
 
 class Event:
     """Representation of a base class for an event in a fault tree.
@@ -86,25 +86,52 @@ class BasicEvent(Event):
         """Produces the Aralia definition of the basic event."""
         printer('p(', self.name, ') = ', self.prob)
 
-    def to_SAPHIRE_json(self, printer):
+    # with open("base-json.json", "r") as f:
+    #     base = json.load(f)
+    def to_SAPHIRE_json_object_test(self, base):
 
-        """Produces SaphSolver JSON definition of the basic event"""
-        printer('{')
-        printer('"id": "', self.name.strip('B'), '",')
-        printer('"corrgate": "0",')
-        printer('"name": "', self.name, '",')
-        printer('"evworkspacepair": {')
-        printer('"ph": 1,')
-        printer('"mt": 1')
-        printer('},')
-        printer('"value": ', self.prob, ',')
-        printer('"initf": "",')
-        printer('"processf": "",')
-        printer('"calctype": "1"')
-        if int(self.name.strip('B')) == self.num_basic:
-              printer('}')
-        else:
-              printer('},')
+        """Produces SaphSolver JSON definition of the basic event using json-python library"""
+
+        # base['saphiresolveinput']['eventlist'][4]['id'] = self.name.strip('B')
+        # base['saphiresolveinput']['eventlist'][4]['corrgate'] = "0"
+        # base['saphiresolveinput']['eventlist'][4]['name'] = self.name
+        # base['saphiresolveinput']['eventlist'][4]['evworkspacepair']['ph'] = '1,'
+        # base['saphiresolveinput']['eventlist'][4]['evworkspacepair']['mt'] = '1,'
+        # base['saphiresolveinput']['eventlist'][4]['value'] = self.prob
+        # base['saphiresolveinput']['eventlist'][4]['initf'] = '"",'
+        # base['saphiresolveinput']['eventlist'][4]['processf'] = '"",'
+        # base['saphiresolveinput']['eventlist'][4]['calctype'] = '"1"'
+        # for i in basic_event:
+
+        # printer('{')
+        # printer('"id": "', self.name.strip('B'), '",')
+        # printer('"corrgate": "0",')
+        # printer('"name": "', self.name, '",')
+        # printer('"evworkspacepair": {')
+        # printer('"ph": 1,')
+        # printer('"mt": 1')
+        # printer('},')
+        # printer('"value": ', self.prob, ',')
+        # printer('"initf": "",')
+        # printer('"processf": "",')
+        # printer('"calctype": "1"')
+        # if int(self.name.strip('B')) == self.num_basic:
+        #       printer('}')
+        # else:
+        #       printer('},')
+
+        eventList = base['saphiresolveinput']['eventlist']
+        eventList[3]['id'] = self.name.strip('B')
+        eventList[3]['corrgate'] = "0"
+        eventList[3]['name'] = self.name
+        eventList[3]['evworkspacepair']['ph'] = '1,'
+        eventList[3]['evworkspacepair']['mt'] = '1,'
+        eventList[3]['value'] = self.prob
+        eventList[3]['initf'] = " "
+        eventList[3]['processf'] = " "
+        eventList[3]['calctype'] = '1,'
+        # dictCopy = eventList[3].copy()
+        # eventList.append(dictCopy)
 
     def to_OpenPRA_json(self, printer):
         """Produces OpenPRA JSON definition of the basic event."""
@@ -639,7 +666,7 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
         for house_event in self.house_events:
             house_event.to_aralia(printer)
 
-    def to_SAPHIRE_json(self, printer, nest=False):
+    def to_SAPHIRE_json_object(self, base, nest=False):
         """Produces SAPHIRE JSON definition of the fault tree.
 
         The fault tree is produced breadth-first.
@@ -651,77 +678,30 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
             nest: A nesting factor for the Boolean formulae.
         """
 
-        sorted_gates = toposort_gates(self.top_gates or [self.top_gate],
-                                      self.gates)
-        for gate in sorted_gates:
-            gate.to_SAPHIRE_JSON(printer, nest)
-            if gate == sorted_gates[-1]:
-                printer("}")
-            else:
-                printer("},")
+        # sorted_gates = toposort_gates(self.top_gates or [self.top_gate],
+        #                               self.gates)
+        # for gate in sorted_gates:
+        #     gate.to_SAPHIRE_JSON(printer, nest)
+        #     if gate == sorted_gates[-1]:
+        #         printer("}")
+        #     else:
+        #         printer("},")
+        #
 
-        printer(']')
-        printer('}')
-        printer('],')
-        printer('"eventlist": [')
-        printer('{')
-        printer('"id":', '"99999"',',')
-        printer('"corrgate": "0",')
-        printer('"name": "', '<TRUE>', '",')
-        printer('"evworkspacepair": {')
-        printer('"ph": 1,')
-        printer('"mt": 1')
-        printer('},')
-        printer('"value": ', 1.00000E+00, ',')
-        printer('"initf": "",')
-        printer('"processf": "",')
-        printer('"calctype": "1"')
-        printer('},')
-        printer('{')
-        printer('"id":', '"99998"',',')
-        printer('"corrgate": "0",')
-        printer('"name": "', '<FALSE>', '",')
-        printer('"evworkspacepair": {')
-        printer('"ph": 1,')
-        printer('"mt": 1')
-        printer('},')
-        printer('"value": ', 0.00000E+00, ',')
-        printer('"initf": "",')
-        printer('"processf": "",')
-        printer('"calctype": "1"')
-        printer('},')
-        printer('{')
-        printer('"id":', '"99997"',',')
-        printer('"corrgate": "0",')
-        printer('"name": "', '<PASS>', '",')
-        printer('"evworkspacepair": {')
-        printer('"ph": 1,')
-        printer('"mt": 1')
-        printer('},')
-        printer('"value": ', 1.00000E+00, ',')
-        printer('"initf": "",')
-        printer('"processf": "",')
-        printer('"calctype": "1"')
-        printer('},')
-        printer('{')
-        printer('"id":', '"99996"',',')
-        printer('"corrgate": "0",')
-        printer('"name": "', "AUTOGENERATED", '",')
-        printer('"evworkspacepair": {')
-        printer('"ph": 1,')
-        printer('"mt": 1')
-        printer('},')
-        printer('"value": ', 1.00000E+00, ',')
-        printer('"initf": "",')
-        printer('"processf": "",')
-        printer('"calctype": "1"')
-        printer('},')
+        with open("base-json.json", "r") as f:
+            base = json.load(f)
         for basic_event in (self.non_ccf_events
                             if self.ccf_groups else self.basic_events):
-            basic_event.to_SAPHIRE_json(printer)
-        printer(']')
-        printer('}')
-        printer('}')
+            basic_event.to_SAPHIRE_json_object_test(base)
+
+            eventList = base['saphiresolveinput']['eventlist']
+            # del eventList[-1]
+            # del eventList[-1]
+            dictCopy = eventList[3].copy()
+            eventList.append(dictCopy)
+        with open("output.json", "w") as f:
+            json.dump(base, f, indent=4)
+
 
     def to_OpenPRA_json(self, printer, nest=False):
         """Produces SAPHIRE JSON definition of the fault tree.

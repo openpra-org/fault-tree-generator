@@ -3,7 +3,8 @@
 from collections import deque
 import random
 import sys
-
+import json
+import itertools
 import argparse as ap
 
 from fault_tree import BasicEvent, HouseEvent, Gate, CcfGroup, FaultTree
@@ -922,7 +923,7 @@ def manage_cmd_args(argv=None):
                         "--num-basic",
                         type=int,
                         help="# of basic events",
-                        default=1000,
+                        default=100,
                         metavar="int")
     parser.add_argument("-a",
                         "--num-args",
@@ -1048,8 +1049,10 @@ def main(argv=None):
     if args.aralia:
         fault_tree.to_aralia(printer)
     elif args.SAPHIRE_json:
-        write_info_JSON(fault_tree, printer, args.seed)
-        fault_tree.to_SAPHIRE_json(printer, args.nest)
+        # write_info_JSON(fault_tree, printer, args.seed)
+
+        fault_tree.to_SAPHIRE_json_object(args.nest)
+
         #write_summary(fault_tree, printer)
     elif args.OpenPRA_json:
         write_info_OpenPRA_JSON(fault_tree, printer, args.seed)
