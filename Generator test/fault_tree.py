@@ -119,17 +119,23 @@ class BasicEvent(Event):
         #       printer('}')
         # else:
         #       printer('},')
+        # i = 0
+        # if i < 100:
 
         eventList = base['saphiresolveinput']['eventlist']
-        eventList[3]['id'] = self.name.strip('B')
-        eventList[3]['corrgate'] = "0"
-        eventList[3]['name'] = self.name
-        eventList[3]['evworkspacepair']['ph'] = '1,'
-        eventList[3]['evworkspacepair']['mt'] = '1,'
-        eventList[3]['value'] = self.prob
-        eventList[3]['initf'] = " "
-        eventList[3]['processf'] = " "
-        eventList[3]['calctype'] = '1,'
+        eventList[4]['id'] = self.name.strip('B')
+        eventList[4]['corrgate'] = "0"
+        eventList[4]['name'] = self.name
+        eventList[4]['evworkspacepair']['ph'] = '1,'
+        eventList[4]['evworkspacepair']['mt'] = '1,'
+        eventList[4]['value'] = self.prob
+        eventList[4]['initf'] = " "
+        eventList[4]['processf'] = " "
+        eventList[4]['calctype'] = '1,'
+        dictCopy = eventList[4].copy()
+        eventList.append(dictCopy)
+            # i = i +1
+        # print(i)
         # dictCopy = eventList[3].copy()
         # eventList.append(dictCopy)
 
@@ -695,12 +701,30 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
             basic_event.to_SAPHIRE_json_object_test(base)
 
             eventList = base['saphiresolveinput']['eventlist']
+            # list_test = list(range(0,101))
+            #
+            # for i in list_test:
+            #     print(i)
+            #     eventList = base['saphiresolveinput']['eventlist']
+            #     eventList[i + 4]['id'] = "Asmaa"
+            #     eventList[i + 4]['corrgate'] = "0"
+            #     eventList[i + 4]['name'] = "Asmaa"
+            #     eventList[i + 4]['evworkspacepair']['ph'] = '1,'
+            #     eventList[i + 4]['evworkspacepair']['mt'] = '1,'
+            #     eventList[i + 4]['value'] = "Asmaa"
+            #     eventList[i + 4]['initf'] = " "
+            #     eventList[i + 4]['processf'] = " "
+            #     eventList[i + 4]['calctype'] = '1,'
+            #     i = i +1
+            # print(i)
+            # del eventList[-4]
             # del eventList[-1]
-            # del eventList[-1]
-            dictCopy = eventList[3].copy()
-            eventList.append(dictCopy)
+
+
         with open("output.json", "w") as f:
+            del eventList[4]
             json.dump(base, f, indent=4)
+        # del eventList[3]
 
 
     def to_OpenPRA_json(self, printer, nest=False):
