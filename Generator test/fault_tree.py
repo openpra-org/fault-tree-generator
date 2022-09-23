@@ -134,6 +134,7 @@ class BasicEvent(Event):
         eventList[4]['calctype'] = '1,'
         dictCopy = eventList[4].copy()
         eventList.append(dictCopy)
+        # print(self.num_basic)
             # i = i +1
         # print(i)
         # dictCopy = eventList[3].copy()
@@ -692,39 +693,76 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
         #         printer("}")
         #     else:
         #         printer("},")
-        #
 
         with open("base-json.json", "r") as f:
             base = json.load(f)
+        base['saphiresolveinput']['header']['projectpath'] = '"projectpath": "Edatadrive82NCState-NEUPModelsGenericPWR Model-debug",'
+        base['saphiresolveinput']['header']['eventtree']['name'] = '"",'
+        base['saphiresolveinput']['header']['eventtree']['number'] = '0,'
+        base['saphiresolveinput']['header']['eventtree']['initevent'] = '0,'
+        base['saphiresolveinput']['header']['eventtree']['seqphase'] = '1'
+        base['saphiresolveinput']['header']['flagnum'] = '0,'
+        base['saphiresolveinput']['header']['ftcount'] = '1,'
+        base['saphiresolveinput']['header']['fthigh'] = '0,'
+        base['saphiresolveinput']['header']['sqcount'] ='0,'
+        base['saphiresolveinput']['header']['sqhigh'] = '0,'
+        base['saphiresolveinput']['header']['becount'] = '0,'
+        base['saphiresolveinput']['header']['behigh'] = '99996,'
+        base['saphiresolveinput']['header']['mthigh'] = '1,'
+        base['saphiresolveinput']['header']['phhigh'] = '1,'
+        base['saphiresolveinput']['header']['truncparam']['ettruncopt'] = '"NormalProbCutOff",'
+        base['saphiresolveinput']['header']['truncparam']['fttruncopt'] = '"GlobalProbCutOff",'
+        base['saphiresolveinput']['header']['truncparam']['sizeopt'] = '"ENoTrunc",'
+        base['saphiresolveinput']['header']['truncparam']['ettruncval'] = '1.000E-13,'
+        base['saphiresolveinput']['header']['truncparam']['fttruncval'] = '1.000E-14,'
+        base['saphiresolveinput']['header']['truncparam']['sizeval'] = '99,'
+        base['saphiresolveinput']['header']['truncparam']['transrepl'] = 'false,'
+        base['saphiresolveinput']['header']['truncparam']['transzones'] = 'false,'
+        base['saphiresolveinput']['header']['truncparam']['translevel'] = '0,'
+        base['saphiresolveinput']['header']['truncparam']['usedual'] = 'false,'
+        base['saphiresolveinput']['header']['truncparam']['dualcutoff'] = '0.000E+00'
+        base['saphiresolveinput']['header']['workspacepair']['ph'] = '1,'
+        base['saphiresolveinput']['header']['workspacepair']['mt'] = '1,'
+        base['saphiresolveinput']['header']['iworkspacepair']['ph'] = '1,'
+        base['saphiresolveinput']['header']['iworkspacepair']['mt'] = '1,'
+        """sysgatelist"""
+        base['saphiresolveinput']['sysgatelist'][0]['name'] = '0,'
+        base['saphiresolveinput']['sysgatelist'][0]['id'] = '0,'
+        base['saphiresolveinput']['sysgatelist'][0]['gateid'] = '0,'
+        base['saphiresolveinput']['sysgatelist'][0]['gateorig'] = '0,'
+        base['saphiresolveinput']['sysgatelist'][0]['gatepos'] = '0,'
+        base['saphiresolveinput']['sysgatelist'][0]['eventid'] = '0,'
+        base['saphiresolveinput']['sysgatelist'][0]['gatecomp'] = '0,'
+        base['saphiresolveinput']['sysgatelist'][0]['comppos'] = '0,'
+        base['saphiresolveinput']['sysgatelist'][0]['compflag'] = '0,'
+        base['saphiresolveinput']['sysgatelist'][0]['gateflag'] = '0,'
+        base['saphiresolveinput']['sysgatelist'][0]['gatet'] = '0,'
+        base['saphiresolveinput']['sysgatelist'][0]['bddsuccess'] = '0,'
+        base['saphiresolveinput']['sysgatelist'][0]['done'] = '0,'
+        """faulttreelist"""
+        base['saphiresolveinput']['faulttreelist'][0]['ftheader']['ftid'] = '0,'
+        base['saphiresolveinput']['faulttreelist'][0]['ftheader']['gtid'] = '0,'
+        base['saphiresolveinput']['faulttreelist'][0]['ftheader']['evid'] = '0,'
+        base['saphiresolveinput']['faulttreelist'][0]['ftheader']['defflag'] = '0,'
+        base['saphiresolveinput']['faulttreelist'][0]['ftheader']['numgates'] = '0,'
+
+        # sorted_gates = toposort_gates(self.top_gates or [self.top_gate],
+        #                               self.gates)
+        # for gate in sorted_gates:
+        #     gate.to_SAPHIRE_JSON(printer, nest)
+        #     if gate == sorted_gates[-1]:
+        #         printer("}")
+        #     else:
+        #         printer("},")
+
         for basic_event in (self.non_ccf_events
                             if self.ccf_groups else self.basic_events):
             basic_event.to_SAPHIRE_json_object_test(base)
 
             eventList = base['saphiresolveinput']['eventlist']
-            # list_test = list(range(0,101))
-            #
-            # for i in list_test:
-            #     print(i)
-            #     eventList = base['saphiresolveinput']['eventlist']
-            #     eventList[i + 4]['id'] = "Asmaa"
-            #     eventList[i + 4]['corrgate'] = "0"
-            #     eventList[i + 4]['name'] = "Asmaa"
-            #     eventList[i + 4]['evworkspacepair']['ph'] = '1,'
-            #     eventList[i + 4]['evworkspacepair']['mt'] = '1,'
-            #     eventList[i + 4]['value'] = "Asmaa"
-            #     eventList[i + 4]['initf'] = " "
-            #     eventList[i + 4]['processf'] = " "
-            #     eventList[i + 4]['calctype'] = '1,'
-            #     i = i +1
-            # print(i)
-            # del eventList[-4]
-            # del eventList[-1]
-
-
         with open("output.json", "w") as f:
             del eventList[4]
             json.dump(base, f, indent=4)
-        # del eventList[3]
 
 
     def to_OpenPRA_json(self, printer, nest=False):
