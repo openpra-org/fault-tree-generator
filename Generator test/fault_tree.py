@@ -15,6 +15,7 @@
 """Fault tree classes and common facilities."""
 
 from collections import deque
+
 import json
 
 class Event:
@@ -65,14 +66,15 @@ class BasicEvent(Event):
         prob: Probability of failure of this basic event.
     """
 
-    def __init__(self, name, prob,num_basic):
+    def __init__(self, name, prob, num_basic):
         """Initializes a basic event node.
 
         Args:
             name: Identifier of the node.
             prob: Probability of the basic event.
         """
-        super(BasicEvent, self).__init__(name)
+
+        super(BasicEvent,self).__init__(name)
         self.prob = prob
         self.num_basic = num_basic
 
@@ -88,6 +90,7 @@ class BasicEvent(Event):
 
     # with open("base-json.json", "r") as f:
     #     base = json.load(f)
+
     def to_SAPHIRE_json_object_test(self, base):
 
         """Produces SaphSolver JSON definition of the basic event using json-python library"""
@@ -376,6 +379,71 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
         printer('\"gateid\":', self.name.strip('Groot'), ",")
         printer(convert_formula(self, last))
 
+    def to_SAPHIRE_JSON_object(self, base, last=True):
+        """Produces the SAPHSOLVE JSON object definition of the gate.
+
+        Args:
+            printer: The output stream.
+            nest: Nesting of NOT connectives in formulas.
+        """
+
+        def arg_to_JSON(type_str, arg):
+            """Produces JSON string representation of an argument."""
+            return "%s\":%s,\n" % (type_str, arg.name)
+        def args_to_JSON(type_str,args):
+            """Produces JSON string representation of arguments."""
+            return "".join(arg_to_JSON(type_str, arg) for arg in args)
+
+        def gate_name_to_number(arg):
+            return "%s" % (arg.name.strip('G'))
+        def gate_name_to_number_last(arg):
+            return "%s\n" % (arg.name.strip('G'))
+
+        def basic_name_to_number(arg):
+            return arg.name.strip('B')
+        def basic_name_to_number_last(arg):
+            return "%s\n" % (arg.name.strip('B'))
+
+
+        def convert_formula(gate,arg, last=False):
+            """Converts the formula of a gate into SAPHIRE JSON representation."""
+            gateList = base['saphiresolveinput']['faulttreelist'][0]['gatelist']
+
+            # JSON_format = ""
+            if gate.operator != "null":
+                gateList[0]['gatetype'] = gate.operator
+                if gate.operator == "atleast":
+                    gateList[0]['gatetype'] = str(gate.k_num)
+
+            num_g = int(str(len(gate.g_arguments)))
+            num_b = int(str(len(gate.b_arguments)))
+            total_num = num_g + num_b
+
+            gateList[0]['numinputs'] = str(total_num)
+            if gate.g_arguments:
+                gate_list = list()
+                for i in gate.g_arguments:
+                    gate_list.append(gate_name_to_number(i))
+                    gateList[0]['gateinput'] = gate_list
+                    print(gate_list)
+            if gate.b_arguments:
+                event_list = list()
+                for i in gate.b_arguments:
+                    event_list.append(basic_name_to_number(i))
+                    gateList[0]['eventinput']= event_list
+            return gateList
+
+
+        gateList = base['saphiresolveinput']['faulttreelist'][0]['gatelist']
+
+        gateList[0]['gateid'] = self.name.strip('Groot')
+        convert_formula(self, last)
+
+        dictCopy = gateList[0].copy()
+        gateList.append(dictCopy)
+
+
+
     def to_OpenPRA_JSON(self, printer, last=True):
         """Produces the OpenPRA JSON definition of the gate.
 
@@ -602,6 +670,7 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
         Args:
             name: The name of the system described by the fault tree container.
         """
+
         self.name = name
         self.top_gate = None
         self.top_gates = None
@@ -693,63 +762,16 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
         #         printer("}")
         #     else:
         #         printer("},")
+        # def __init__(self, BasicEvent)
+        #      BasicEvent.__init__(num_basic)
+        # num_basic_events = self.num_basic
+        with open("output.json", "r") as f:
+             base = json.load(f)
 
-        with open("base-json.json", "r") as f:
-            base = json.load(f)
-        base['saphiresolveinput']['header']['projectpath'] = '"projectpath": "Edatadrive82NCState-NEUPModelsGenericPWR Model-debug",'
-        base['saphiresolveinput']['header']['eventtree']['name'] = '"",'
-        base['saphiresolveinput']['header']['eventtree']['number'] = '0,'
-        base['saphiresolveinput']['header']['eventtree']['initevent'] = '0,'
-        base['saphiresolveinput']['header']['eventtree']['seqphase'] = '1'
-        base['saphiresolveinput']['header']['flagnum'] = '0,'
-        base['saphiresolveinput']['header']['ftcount'] = '1,'
-        base['saphiresolveinput']['header']['fthigh'] = '0,'
-        base['saphiresolveinput']['header']['sqcount'] ='0,'
-        base['saphiresolveinput']['header']['sqhigh'] = '0,'
-        base['saphiresolveinput']['header']['becount'] = '0,'
-        base['saphiresolveinput']['header']['behigh'] = '99996,'
-        base['saphiresolveinput']['header']['mthigh'] = '1,'
-        base['saphiresolveinput']['header']['phhigh'] = '1,'
-        base['saphiresolveinput']['header']['truncparam']['ettruncopt'] = '"NormalProbCutOff",'
-        base['saphiresolveinput']['header']['truncparam']['fttruncopt'] = '"GlobalProbCutOff",'
-        base['saphiresolveinput']['header']['truncparam']['sizeopt'] = '"ENoTrunc",'
-        base['saphiresolveinput']['header']['truncparam']['ettruncval'] = '1.000E-13,'
-        base['saphiresolveinput']['header']['truncparam']['fttruncval'] = '1.000E-14,'
-        base['saphiresolveinput']['header']['truncparam']['sizeval'] = '99,'
-        base['saphiresolveinput']['header']['truncparam']['transrepl'] = 'false,'
-        base['saphiresolveinput']['header']['truncparam']['transzones'] = 'false,'
-        base['saphiresolveinput']['header']['truncparam']['translevel'] = '0,'
-        base['saphiresolveinput']['header']['truncparam']['usedual'] = 'false,'
-        base['saphiresolveinput']['header']['truncparam']['dualcutoff'] = '0.000E+00'
-        base['saphiresolveinput']['header']['workspacepair']['ph'] = '1,'
-        base['saphiresolveinput']['header']['workspacepair']['mt'] = '1,'
-        base['saphiresolveinput']['header']['iworkspacepair']['ph'] = '1,'
-        base['saphiresolveinput']['header']['iworkspacepair']['mt'] = '1,'
-        """sysgatelist"""
-        base['saphiresolveinput']['sysgatelist'][0]['name'] = '0,'
-        base['saphiresolveinput']['sysgatelist'][0]['id'] = '0,'
-        base['saphiresolveinput']['sysgatelist'][0]['gateid'] = '0,'
-        base['saphiresolveinput']['sysgatelist'][0]['gateorig'] = '0,'
-        base['saphiresolveinput']['sysgatelist'][0]['gatepos'] = '0,'
-        base['saphiresolveinput']['sysgatelist'][0]['eventid'] = '0,'
-        base['saphiresolveinput']['sysgatelist'][0]['gatecomp'] = '0,'
-        base['saphiresolveinput']['sysgatelist'][0]['comppos'] = '0,'
-        base['saphiresolveinput']['sysgatelist'][0]['compflag'] = '0,'
-        base['saphiresolveinput']['sysgatelist'][0]['gateflag'] = '0,'
-        base['saphiresolveinput']['sysgatelist'][0]['gatet'] = '0,'
-        base['saphiresolveinput']['sysgatelist'][0]['bddsuccess'] = '0,'
-        base['saphiresolveinput']['sysgatelist'][0]['done'] = '0,'
-        """faulttreelist"""
-        base['saphiresolveinput']['faulttreelist'][0]['ftheader']['ftid'] = '0,'
-        base['saphiresolveinput']['faulttreelist'][0]['ftheader']['gtid'] = '0,'
-        base['saphiresolveinput']['faulttreelist'][0]['ftheader']['evid'] = '0,'
-        base['saphiresolveinput']['faulttreelist'][0]['ftheader']['defflag'] = '0,'
-        base['saphiresolveinput']['faulttreelist'][0]['ftheader']['numgates'] = '0,'
-
-        # sorted_gates = toposort_gates(self.top_gates or [self.top_gate],
-        #                               self.gates)
-        # for gate in sorted_gates:
-        #     gate.to_SAPHIRE_JSON(printer, nest)
+        sorted_gates = toposort_gates(self.top_gates or [self.top_gate],
+                                      self.gates)
+        for gate in sorted_gates:
+            gate.to_SAPHIRE_JSON_object(base, nest)
         #     if gate == sorted_gates[-1]:
         #         printer("}")
         #     else:
@@ -758,9 +780,10 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
         for basic_event in (self.non_ccf_events
                             if self.ccf_groups else self.basic_events):
             basic_event.to_SAPHIRE_json_object_test(base)
+        # print(BasicEvent.prob)
 
-            eventList = base['saphiresolveinput']['eventlist']
-        with open("output.json", "w") as f:
+        eventList = base['saphiresolveinput']['eventlist']
+        with open("final.json", "w") as f:
             del eventList[4]
             json.dump(base, f, indent=4)
 

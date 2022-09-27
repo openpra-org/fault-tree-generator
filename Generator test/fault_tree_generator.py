@@ -629,6 +629,7 @@ def generate_fault_tree(ft_name, root_name, factors):
 
     # Estimating the parameters
     num_gate = factors.get_num_gate()
+    num_basic_events = factors.num_basic
     num_common_basic = factors.get_num_common_basic(num_gate)
     num_common_gate = factors.get_num_common_gate(num_gate)
     common_basic = [
@@ -767,6 +768,65 @@ def write_info_JSON(fault_tree, printer, seed):
     printer('},')
     printer('"gatelist": [')
 
+def write_info_SAPHSOLVE_JSON_object(fault_tree, base, seed):
+    # with open("base-json.json", "r") as f:
+    #     base = json.load(f)
+    with open("base-json.json", "r") as f:
+        base = json.load(f)
+    factors = fault_tree.factors
+        # @BasicEvent(event)
+    base['saphiresolveinput']['header'][
+        'projectpath'] = '"projectpath": "Edatadrive82NCState-NEUPModelsGenericPWR Model-debug",'
+    base['saphiresolveinput']['header']['eventtree']['name'] = '"",'
+    base['saphiresolveinput']['header']['eventtree']['number'] = '0,'
+    base['saphiresolveinput']['header']['eventtree']['initevent'] = '0,'
+    base['saphiresolveinput']['header']['eventtree']['seqphase'] = '1'
+    base['saphiresolveinput']['header']['flagnum'] = '0,'
+    base['saphiresolveinput']['header']['ftcount'] = '1,'
+    base['saphiresolveinput']['header']['fthigh'] = '139,'
+    base['saphiresolveinput']['header']['sqcount'] = '0,'
+    base['saphiresolveinput']['header']['sqhigh'] = '0,'
+    base['saphiresolveinput']['header']['becount'] = 4 + factors.num_basic
+    base['saphiresolveinput']['header']['behigh'] = '99996,'
+    base['saphiresolveinput']['header']['mthigh'] = '1,'
+    base['saphiresolveinput']['header']['phhigh'] = '1,'
+    base['saphiresolveinput']['header']['truncparam']['ettruncopt'] = '"NormalProbCutOff",'
+    base['saphiresolveinput']['header']['truncparam']['fttruncopt'] = '"GlobalProbCutOff",'
+    base['saphiresolveinput']['header']['truncparam']['sizeopt'] = '"ENoTrunc",'
+    base['saphiresolveinput']['header']['truncparam']['ettruncval'] = '1.000E-13,'
+    base['saphiresolveinput']['header']['truncparam']['fttruncval'] = '1.000E-14,'
+    base['saphiresolveinput']['header']['truncparam']['sizeval'] = '99,'
+    base['saphiresolveinput']['header']['truncparam']['transrepl'] = 'false,'
+    base['saphiresolveinput']['header']['truncparam']['transzones'] = 'false,'
+    base['saphiresolveinput']['header']['truncparam']['translevel'] = '0,'
+    base['saphiresolveinput']['header']['truncparam']['usedual'] = 'false,'
+    base['saphiresolveinput']['header']['truncparam']['dualcutoff'] = '0.000E+00'
+    base['saphiresolveinput']['header']['workspacepair']['ph'] = '1,'
+    base['saphiresolveinput']['header']['workspacepair']['mt'] = '1,'
+    base['saphiresolveinput']['header']['iworkspacepair']['ph'] = '1,'
+    base['saphiresolveinput']['header']['iworkspacepair']['mt'] = '1,'
+    """sysgatelist"""
+    base['saphiresolveinput']['sysgatelist'][0]['name'] = fault_tree.name
+    base['saphiresolveinput']['sysgatelist'][0]['id'] = '139,'
+    base['saphiresolveinput']['sysgatelist'][0]['gateid'] = fault_tree.top_gate.name.strip('root')
+    base['saphiresolveinput']['sysgatelist'][0]['gateorig'] = fault_tree.top_gate.name.strip('root')
+    base['saphiresolveinput']['sysgatelist'][0]['gatepos'] = '0,'
+    base['saphiresolveinput']['sysgatelist'][0]['eventid'] = '99996,'
+    base['saphiresolveinput']['sysgatelist'][0]['gatecomp'] = fault_tree.top_gate.name.strip('root')
+    base['saphiresolveinput']['sysgatelist'][0]['comppos'] = '0,'
+    base['saphiresolveinput']['sysgatelist'][0]['compflag'] = ','
+    base['saphiresolveinput']['sysgatelist'][0]['gateflag'] = ','
+    base['saphiresolveinput']['sysgatelist'][0]['gatet'] = ','
+    base['saphiresolveinput']['sysgatelist'][0]['bddsuccess'] = 'false,'
+    base['saphiresolveinput']['sysgatelist'][0]['done'] = 'false,'
+    """faulttreelist"""
+    base['saphiresolveinput']['faulttreelist'][0]['ftheader']['ftid'] = '139,'
+    base['saphiresolveinput']['faulttreelist'][0]['ftheader']['gtid'] = fault_tree.top_gate.name.strip('root')
+    base['saphiresolveinput']['faulttreelist'][0]['ftheader']['evid'] = '99996,'
+    base['saphiresolveinput']['faulttreelist'][0]['ftheader']['defflag'] = '0,'
+    base['saphiresolveinput']['faulttreelist'][0]['ftheader']['numgates'] = len(fault_tree.gates)
+    with open("output.json", "w") as f:
+         json.dump(base, f, indent=4)
 
 def write_info_OpenPRA_JSON(fault_tree, printer, seed):
     """Writes the information about the setup for fault tree generation in OpenPRA Json format.
@@ -1049,11 +1109,9 @@ def main(argv=None):
     if args.aralia:
         fault_tree.to_aralia(printer)
     elif args.SAPHIRE_json:
-        # write_info_JSON(fault_tree, printer, args.seed)
 
-        fault_tree.to_SAPHIRE_json_object(args.nest)
-
-        #write_summary(fault_tree, printer)
+         write_info_SAPHSOLVE_JSON_object(fault_tree, printer, args.seed)
+         fault_tree.to_SAPHIRE_json_object(args.nest)
     elif args.OpenPRA_json:
         write_info_OpenPRA_JSON(fault_tree, printer, args.seed)
         fault_tree.to_OpenPRA_json(printer, args.nest)
