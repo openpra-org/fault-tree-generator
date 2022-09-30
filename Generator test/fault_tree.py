@@ -126,15 +126,15 @@ class BasicEvent(Event):
         # if i < 100:
 
         eventList = base['saphiresolveinput']['eventlist']
-        eventList[4]['id'] = self.name.strip('B')
-        eventList[4]['corrgate'] = "0"
+        eventList[4]['id'] = int(self.name.strip('B'))
+        eventList[4]['corrgate'] = 0
         eventList[4]['name'] = self.name
-        eventList[4]['evworkspacepair']['ph'] = '1,'
-        eventList[4]['evworkspacepair']['mt'] = '1,'
+        eventList[4]['evworkspacepair']['ph'] = 1
+        eventList[4]['evworkspacepair']['mt'] = 1
         eventList[4]['value'] = self.prob
         eventList[4]['initf'] = " "
         eventList[4]['processf'] = " "
-        eventList[4]['calctype'] = '1,'
+        eventList[4]['calctype'] = "1"
         dictCopy = eventList[4].copy()
         eventList.append(dictCopy)
         # print(self.num_basic)
@@ -375,9 +375,11 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
                 JSON_format += "]"
             return JSON_format
 
+
         printer('{')
         printer('\"gateid\":', self.name.strip('Groot'), ",")
         printer(convert_formula(self, last))
+
 
     def to_SAPHIRE_JSON_object(self, base, last=True):
         """Produces the SAPHSOLVE JSON object definition of the gate.
@@ -395,14 +397,9 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
             return "".join(arg_to_JSON(type_str, arg) for arg in args)
 
         def gate_name_to_number(arg):
-            return "%s" % (arg.name.strip('G'))
-        def gate_name_to_number_last(arg):
-            return "%s\n" % (arg.name.strip('G'))
-
+            return arg.name.strip('\"G')
         def basic_name_to_number(arg):
-            return arg.name.strip('B')
-        def basic_name_to_number_last(arg):
-            return "%s\n" % (arg.name.strip('B'))
+            return arg.name.strip('\"B')
 
 
         def convert_formula(gate,arg, last=False):
@@ -411,7 +408,7 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
 
             # JSON_format = ""
             if gate.operator != "null":
-                gateList[0]['gatetype'] = gate.operator
+                gateList[1]['gatetype'] = gate.operator
                 if gate.operator == "atleast":
                     gateList[0]['gatetype'] = str(gate.k_num)
 
@@ -419,27 +416,36 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
             num_b = int(str(len(gate.b_arguments)))
             total_num = num_g + num_b
 
-            gateList[0]['numinputs'] = str(total_num)
+            gateList[1]['numinputs'] = int(str(total_num))
+            gate_list = list()
             if gate.g_arguments:
-                gate_list = list()
+
                 for i in gate.g_arguments:
-                    gate_list.append(gate_name_to_number(i))
-                    gateList[0]['gateinput'] = gate_list
-                    print(gate_list)
+                    gate_list.append(int(gate_name_to_number(i)))
+                    gateList[1]['gateinput'] = gate_list
+
+            else:
+                    gateList[1]['gateinput'] = 0
+                    del gateList[1]['gateinput']
+
+            event_list = list()
             if gate.b_arguments:
-                event_list = list()
+
                 for i in gate.b_arguments:
-                    event_list.append(basic_name_to_number(i))
-                    gateList[0]['eventinput']= event_list
+                    event_list.append(int(basic_name_to_number(i)))
+                    gateList[1]['eventinput']= event_list
+
+            else:
+                del gateList[1]['eventinput']
             return gateList
 
 
         gateList = base['saphiresolveinput']['faulttreelist'][0]['gatelist']
 
-        gateList[0]['gateid'] = self.name.strip('Groot')
+        gateList[1]['gateid'] = int(self.name.strip('Groot'))
         convert_formula(self, last)
 
-        dictCopy = gateList[0].copy()
+        dictCopy = gateList[1].copy()
         gateList.append(dictCopy)
 
 
@@ -771,7 +777,10 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
         sorted_gates = toposort_gates(self.top_gates or [self.top_gate],
                                       self.gates)
         for gate in sorted_gates:
+            gateList = base['saphiresolveinput']['faulttreelist'][0]['gatelist']
+
             gate.to_SAPHIRE_JSON_object(base, nest)
+
         #     if gate == sorted_gates[-1]:
         #         printer("}")
         #     else:
@@ -784,6 +793,8 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
 
         eventList = base['saphiresolveinput']['eventlist']
         with open("final.json", "w") as f:
+            del gateList[1]
+            del gateList[0]
             del eventList[4]
             json.dump(base, f, indent=4)
 
