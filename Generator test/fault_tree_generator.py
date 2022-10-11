@@ -687,7 +687,7 @@ def write_info(fault_tree, printer, seed):
     printer('Minimum probability for basic events: ', factors.min_prob)
     printer('-->')
 
-def write_info_JSON(fault_tree, printer, seed):
+def write_info_JSON_printer(fault_tree, printer, seed):
     """Writes the information about the setup for fault tree generation in SAPHIRE Json format.
 
     Args:
@@ -829,7 +829,7 @@ def write_info_SAPHSOLVE_JSON_object(fault_tree, base, seed):
     with open("output.json", "w") as f:
          json.dump(base, f, indent=4)
 
-def write_info_OpenPRA_JSON(fault_tree, printer, seed):
+def write_info_OpenPRA_JSON_printer(fault_tree, printer, seed):
     """Writes the information about the setup for fault tree generation in OpenPRA Json format.
 
     Args:
@@ -984,7 +984,7 @@ def manage_cmd_args(argv=None):
                         "--num-basic",
                         type=int,
                         help="# of basic events",
-                        default=10000,
+                        default=100,
                         metavar="int")
     parser.add_argument("-a",
                         "--num-args",
@@ -1052,10 +1052,13 @@ def manage_cmd_args(argv=None):
     parser.add_argument("--aralia",
                         action="store_true",
                         help="apply the Aralia format to the output")
-    parser.add_argument("--SAPHIRE_json",
+    parser.add_argument("--SAPHIRE_json_printer",
                         action="store_true",
                         help="apply the SAPHIRE JSON format to the output")
-    parser.add_argument("--OpenPRA_json",
+    parser.add_argument("--SAPHIRE_json_object",
+                        action="store_true",
+                        help="apply the SAPHIRE JSON format to the output")
+    parser.add_argument("--OpenPRA_json_printer",
                         action="store_true",
                         help="apply the OpenPRA JSON format to the output")
     parser.add_argument("--nest",
@@ -1109,14 +1112,16 @@ def main(argv=None):
     printer = get_printer(args.out)
     if args.aralia:
         fault_tree.to_aralia(printer)
-    elif args.SAPHIRE_json:
-
+    elif args.SAPHIRE_json_object:
          write_info_SAPHSOLVE_JSON_object(fault_tree, printer, args.seed)
          fault_tree.to_SAPHIRE_json_object(args.nest)
-    elif args.OpenPRA_json:
-        write_info_OpenPRA_JSON(fault_tree, printer, args.seed)
-        fault_tree.to_OpenPRA_json(printer, args.nest)
+    elif args.OpenPRA_json_printer:
+        write_info_OpenPRA_JSON_printer(fault_tree, printer, args.seed)
+        fault_tree.to_OpenPRA_json_printer(printer, args.nest)
         #write_summary(fault_tree, printer)
+    elif args.SAPHIRE_json_printer:
+        write_info_JSON_printer(fault_tree, printer, args.seed)
+        fault_tree.to_SAPHIRE_json_printer(printer, args.nest)
     else:
         write_info(fault_tree, printer, args.seed)
         write_summary(fault_tree, printer)
