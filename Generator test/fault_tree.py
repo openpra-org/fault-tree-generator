@@ -436,6 +436,7 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
                     gateList[1]['eventinput']= event_list
 
             else:
+                gateList[1]['eventinput'] = 0
                 del gateList[1]['eventinput']
             return gateList
 
