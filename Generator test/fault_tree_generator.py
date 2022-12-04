@@ -60,6 +60,8 @@ class Factors:  # pylint: disable=too-many-instance-attributes
 
         # Special case with the constrained number of gates
         self.__num_gate = None  # If set, all other factors get affected.
+        self.ccf_model = None
+        self.ccf_size = None
 
     def set_min_max_prob(self, min_value, max_value):
         """Sets the probability boundaries for basic events.
@@ -108,7 +110,7 @@ class Factors:  # pylint: disable=too-many-instance-attributes
         self.parents_b = parents_b
         self.parents_g = parents_g
 
-    def set_num_factors(self, num_args, num_basic, num_house=0, num_ccf=0):
+    def set_num_factors(self, num_args, num_basic, num_house=0, num_ccf=0, ccf_model = 0, ccf_size =0):
         """Sets the size factors.
 
         Args:
@@ -116,6 +118,7 @@ class Factors:  # pylint: disable=too-many-instance-attributes
             num_basic: The number of basic events.
             num_house: The number of house events.
             num_ccf: The number of ccf groups.
+            ccf_model = model used to solve CCF, MGL or alpha-factor
 
         Raises:
             FactorError: Invalid values or setup.
@@ -136,7 +139,11 @@ class Factors:  # pylint: disable=too-many-instance-attributes
         self.num_basic = num_basic
         self.num_house = num_house
         self.num_ccf = num_ccf
-
+        self.ccf_model = ccf_model
+        self.ccf_size = ccf_size
+        # print(ccf_model)
+        # print(ccf_size)
+    #
     @staticmethod
     def __calculate_max_args(num_args, weights):
         """Calculates the maximum number of arguments for sampling.
@@ -434,9 +441,18 @@ class GeneratorFaultTree(FaultTree):
         ccf_group.members = members
         ccf_group.prob = random.uniform(self.factors.min_prob,
                                         self.factors.max_prob)
-        ccf_group.model = "MGL"
-        levels = random.randint(2, len(members))
-        ccf_group.factors = [random.uniform(0.1, 1) for _ in range(levels - 1)]
+        ccf_group.model = self.factors.ccf_model
+
+        # ccf_group.model = "alpha-factor"
+        # levels = random.randint(2, len(members)) # the levels should be equal to the number of BEs for alpha-factor model and -1 for MGL
+        levels = len(members)
+        # print("levels=",levels)
+        # ccf_group.factors = [random.uniform(0.1, 1) for _ in range(levels - 1)]
+        # sorted(iterable, key=key, reverse=reverse)
+        if ccf_group.model == "MGL":
+            ccf_group.factors = sorted([(random.uniform(0.1, 1)) for _ in range(levels - 1)], reverse=True)
+        else:
+            ccf_group.factors = sorted([(random.uniform(0.1, 1)) for _ in range(levels)], reverse=True)
         return ccf_group
 
 
@@ -602,7 +618,10 @@ def generate_ccf_groups(fault_tree):
         last_mem = 0
         while len(fault_tree.ccf_groups) < fault_tree.factors.num_ccf:
             max_args = int(2 * fault_tree.factors.num_args - 2)
+            max_args = fault_tree.factors.ccf_size
+            # print(max_args)
             group_size = random.randint(2, max_args)
+            # print(group_size)
             last_mem = first_mem + group_size
             if last_mem > len(members):
                 break
@@ -794,8 +813,8 @@ def write_info_SAPHSOLVE_JSON_object(fault_tree, base, seed):
     base['saphiresolveinput']['header']['truncparam']['ettruncopt'] = 'NormalProbCutOff'
     base['saphiresolveinput']['header']['truncparam']['fttruncopt'] = 'GlobalProbCutOff'
     base['saphiresolveinput']['header']['truncparam']['sizeopt'] = 'ENoTrunc'
-    base['saphiresolveinput']['header']['truncparam']['ettruncval'] = 1.000E-13
-    base['saphiresolveinput']['header']['truncparam']['fttruncval'] = 1.000E-14
+    base['saphiresolveinput']['header']['truncparam']['ettruncval'] = 1.000E-100
+    base['saphiresolveinput']['header']['truncparam']['fttruncval'] = 1.000E-100
     base['saphiresolveinput']['header']['truncparam']['sizeval'] = 99
     base['saphiresolveinput']['header']['truncparam']['transrepl'] = test
     base['saphiresolveinput']['header']['truncparam']['transzones'] = test
@@ -997,7 +1016,7 @@ def manage_cmd_args(argv=None):
                         nargs="+",
                         metavar="float",
                         help="weights for [AND, OR, K/N, NOT, XOR] gates",
-                        default=[1, 1, 0, 0, 0])
+                        default=[1, 0, 0, 0, 0])
     parser.add_argument("--common-b",
                         type=float,
                         default=0.1,
@@ -1042,8 +1061,18 @@ def manage_cmd_args(argv=None):
     parser.add_argument("--num-ccf",
                         type=int,
                         help="# of ccf groups",
-                        default=0,
+                        default=10,
                         metavar="int")
+    parser.add_argument("--ccf-size",
+                        type=int,
+                        help="ccf max size",
+                        default=10,
+                        metavar="int")
+    parser.add_argument("--ccf-model",
+                        type=str,
+                        help="ccf model, user should use MGL or alpha-factor",
+                        default="alpha-factor")
+                        # metavar="int")
     parser.add_argument("-o",
                         "--out",
                         type=str,
@@ -1087,7 +1116,7 @@ def setup_factors(args):
     factors.set_common_event_factors(args.common_b, args.common_g,
                                      args.parents_b, args.parents_g)
     factors.set_num_factors(args.num_args, args.num_basic, args.num_house,
-                            args.num_ccf)
+                            args.num_ccf,args.ccf_model, args.ccf_size)
     factors.set_gate_weights([float(i) for i in args.weights_g])
     if args.num_gate:
         factors.constrain_num_gate(args.num_gate)

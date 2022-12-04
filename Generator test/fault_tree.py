@@ -150,6 +150,43 @@ class BasicEvent(Event):
               printer('},')
 
 
+    def to_SAPHIRE_json_object(self, base):
+
+        """Produces SaphSolver JSON definition of the basic event using json-python library"""
+
+        eventList = base['saphiresolveinput']['eventlist']
+        eventList[4]['id'] = int(self.name.strip('B'))
+        eventList[4]['corrgate'] = 0
+        eventList[4]['name'] = self.name
+        eventList[4]['evworkspacepair']['ph'] = 1
+        eventList[4]['evworkspacepair']['mt'] = 1
+        eventList[4]['value'] = self.prob
+        eventList[4]['initf'] = " "
+        eventList[4]['processf'] = " "
+        eventList[4]['calctype'] = "1"
+        dictCopy = eventList[4].copy()
+        eventList.append(dictCopy)
+
+
+    def to_OpenPRA_json_printer(self, printer):
+        """Produces OpenPRA JSON definition of the basic event."""
+        printer('"', self.name, '": {')
+        printer('"role": "public",')
+        printer('"label": {')
+        printer('"name": "Basic Event:', self.name, '",')
+        printer('"description": ""')
+        printer('},')
+        printer('"expression": {')
+        printer('"value": ', self.prob, ',')
+        printer('"_proxy": "Float"')
+        printer('},')
+        printer('"source_type": "hcl"')
+        if int(self.name.strip('B')) == self.num_basic:
+              printer('}')
+        else:
+              printer('},')
+
+
 class HouseEvent(Event):
     """Representation of a house event in a fault tree.
 
@@ -623,9 +660,12 @@ class CcfGroup:  # pylint: disable=too-few-public-methods
         printer('</distribution>')
 
         printer('<factors>')
-        assert self.model == "MGL"
+        # assert self.model == "MGL"
         assert self.factors
-        level = 2
+        if self.model == "MGL":
+            level = 2
+        else:
+            level = 1
         for factor in self.factors:
             printer('<factor level="', level, '">')
             printer('<float value="', factor, '"/>')
@@ -891,6 +931,89 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
         printer('"description": ""')
         printer('}')
         printer('}')
+
+    def to_SAPHIRE_json_object(self, base, nest=False):
+        """Produces SAPHIRE JSON definition of the fault tree using the JSON python library.
+
+        The fault tree is produced breadth-first.
+        The output SAPHIRE JSON representation is not formatted for human readability.
+        The fault tree must be valid and well-formed.
+
+        Args:
+            nest: A nesting factor for the Boolean formulae.
+        """
+
+        with open("output.json", "r") as f:
+             base = json.load(f)
+
+        sorted_gates = toposort_gates(self.top_gates or [self.top_gate],
+                                      self.gates)
+        for gate in sorted_gates:
+            gateList = base['saphiresolveinput']['faulttreelist'][0]['gatelist']
+
+            gate.to_SAPHIRE_JSON_object(base, nest)
+
+
+        for basic_event in (self.non_ccf_events
+                            if self.ccf_groups else self.basic_events):
+            basic_event.to_SAPHIRE_json_object(base)
+        eventList = base['saphiresolveinput']['eventlist']
+        with open("SAPHSOLVE_INPUT.JSInp", "w") as f:
+            del gateList[1]
+            del gateList[0]
+            del eventList[4]
+            json.dump(base, f, indent=4)
+
+
+    def to_OpenPRA_json_printer(self, printer, nest=False):
+        """Produces SAPHIRE JSON definition of the fault tree.
+
+        The fault tree is produced breadth-first.
+        The output SAPHIRE JSON representation is not formatted for human readability.
+        The fault tree must be valid and well-formed.
+
+        Args:
+            printer: The output stream.
+            nest: A nesting factor for the Boolean formulae.
+        """
+        printer('"basic_events": {')
+        for basic_event in (self.non_ccf_events
+                            if self.ccf_groups else self.basic_events):
+            basic_event.to_OpenPRA_json_printer(printer)
+        printer('},')
+        printer('"house_events": {},')
+        printer('"gates": {')
+
+        sorted_gates = toposort_gates(self.top_gates or [self.top_gate],
+                                      self.gates)
+        for gate in sorted_gates:
+            gate.to_OpenPRA_JSON_printer(printer, nest)
+            if gate == sorted_gates[-1]:
+                printer("}")
+                printer("}")
+                printer("},")
+            else:
+                printer("}")
+                printer("},")
+        # printer('}')
+        printer('"components": {},')
+        printer('"top_node": {')
+        printer('"name": "80000",')
+        printer('"reference_type": "gates",')
+        printer('"tree_id": null,')
+        printer('"path": "",')
+        printer('"_proxy": "EventReference"')
+        printer('},')
+        printer('"name": "test2",')
+        printer('"model_tree_id": null,')
+        printer('"label": {')
+        printer('"name": "test2",')
+        printer('"description": ""')
+        printer('}')
+        printer('}')
+
+
+
 
 
 
