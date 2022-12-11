@@ -1,7 +1,9 @@
 # pylint: disable=too-many-lines
 
 from collections import deque
+import numpy
 import random
+import math
 import sys
 import json
 import itertools
@@ -449,10 +451,56 @@ class GeneratorFaultTree(FaultTree):
         # print("levels=",levels)
         # ccf_group.factors = [random.uniform(0.1, 1) for _ in range(levels - 1)]
         # sorted(iterable, key=key, reverse=reverse)
+
         if ccf_group.model == "MGL":
-            ccf_group.factors = sorted([(random.uniform(0.1, 1)) for _ in range(levels - 1)], reverse=True)
+            summation = 0
+            tests = []
+            for i in range(levels-1):
+                test = random.uniform(0.1, 1)
+                # print("i,", i)
+                tests.append(test)
+                # print(tests)
+                # print(test)
+                summation += test
+            ccf_group.factors = sorted([(_ / summation) for _ in tests], reverse = True)
+            ccf_group.factors.append(ccf_group.factors)
+            # print("ccf_test", ccf_group.factors)
+
+            # ccf_group.factors = sorted([(random.uniform(0.1, 1)) for _ in range(levels - 1)], reverse=True)
+
         else:
-            ccf_group.factors = sorted([(random.uniform(0.1, 1)) for _ in range(levels)], reverse=True)
+            summation = 0
+            tests = []
+            for i in range(levels):
+                test = random.uniform(0.1, 1)
+                # print("i,", i)
+                tests.append(test)
+                # print(tests)
+                # print(test)
+                summation += test
+            # print("sum", summation)
+            # ccf_group.factors = sorted([(_/summation) for _ in range(levels)], reverse=True)
+            ccf_group.factors = sorted([(_ / summation) for _ in tests], reverse = True)
+            # print("levels", range(levels))
+
+            # ccf_group.factors = sorted([(random.uniform(0.1, 1)) for _ in range(levels)], reverse=True)
+            # test_sum = sum(ccf_group.factors)
+            # ccf_group.factors.append(ccf_group.factors)
+            # print(ccf_group.factors)
+
+            # for i in ccf_group.factors:
+            #     print(i)
+            #     store += i
+            #     print(store)
+            # test = list(map(float, ccf_group.factors))
+            # total = math.fsum(test)
+            # print(test)
+
+            # print(sum(ccf_group.factors))
+            # w = numpy.array(ccf_group.factors)
+            # print("test",w)
+            # print("ccf_test",ccf_group.factors)
+            # print("tests_sum",summ)
         return ccf_group
 
 
@@ -628,6 +676,7 @@ def generate_ccf_groups(fault_tree):
             fault_tree.construct_ccf_group(members[first_mem:last_mem])
             first_mem = last_mem
         fault_tree.non_ccf_events = members[first_mem:]
+
 
 
 def generate_fault_tree(ft_name, root_name, factors):
@@ -834,9 +883,6 @@ def write_info_SAPHSOLVE_JSON_object(fault_tree, base, seed):
     base['saphiresolveinput']['sysgatelist'][0]['eventid'] = 99996
     base['saphiresolveinput']['sysgatelist'][0]['gatecomp'] = int(fault_tree.top_gate.name.strip('root'))
     base['saphiresolveinput']['sysgatelist'][0]['comppos'] = 0
-    # base['saphiresolveinput']['sysgatelist'][0]['compflag'] = ','
-    # base['saphiresolveinput']['sysgatelist'][0]['gateflag'] = ','
-    # base['saphiresolveinput']['sysgatelist'][0]['gatet'] = ''
     base['saphiresolveinput']['sysgatelist'][0]['bddsuccess'] = test
     base['saphiresolveinput']['sysgatelist'][0]['done'] = test
     """faulttreelist"""
@@ -1003,7 +1049,7 @@ def manage_cmd_args(argv=None):
                         "--num-basic",
                         type=int,
                         help="# of basic events",
-                        default=100,
+                        default=1000,
                         metavar="int")
     parser.add_argument("-a",
                         "--num-args",
@@ -1016,7 +1062,7 @@ def manage_cmd_args(argv=None):
                         nargs="+",
                         metavar="float",
                         help="weights for [AND, OR, K/N, NOT, XOR] gates",
-                        default=[1, 0, 0, 0, 0])
+                        default=[1, 3, 0, 0, 0])
     parser.add_argument("--common-b",
                         type=float,
                         default=0.1,
@@ -1061,12 +1107,12 @@ def manage_cmd_args(argv=None):
     parser.add_argument("--num-ccf",
                         type=int,
                         help="# of ccf groups",
-                        default=10,
+                        default=300,
                         metavar="int")
     parser.add_argument("--ccf-size",
                         type=int,
-                        help="ccf max size",
-                        default=10,
+                        help="ccf max size, max in SAPHIRE is 8",
+                        default=8,
                         metavar="int")
     parser.add_argument("--ccf-model",
                         type=str,

@@ -730,9 +730,12 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
         printer('</define-fault-tree>')
 
         printer('<model-data>')
+
         for basic_event in (self.non_ccf_events
                             if self.ccf_groups else self.basic_events):
             basic_event.to_xml(printer)
+
+
 
         for house_event in self.house_events:
             house_event.to_xml(printer)
