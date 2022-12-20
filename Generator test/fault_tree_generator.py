@@ -457,13 +457,19 @@ class GeneratorFaultTree(FaultTree):
             tests = []
             for i in range(levels-1):
                 test = random.uniform(0.1, 1)
-                # print("i,", i)
                 tests.append(test)
-                # print(tests)
-                # print(test)
-                summation += test
-            ccf_group.factors = sorted([(_ / summation) for _ in tests], reverse = True)
-            ccf_group.factors.append(ccf_group.factors)
+                    # print(test)
+            # print("test",tests)
+            n = 1
+
+            for i in tests:
+                ccf_factors = (1 - i) * n
+                n = i*n
+                ccf_group.factors.append(ccf_factors)
+
+            # print(ccf_group.factors)
+            # ccf_group.factors = sorted([(_* for _ in tests], reverse = True)
+            # ccf_group.factors.append(ccf_group.factors)
             # print("ccf_test", ccf_group.factors)
 
             # ccf_group.factors = sorted([(random.uniform(0.1, 1)) for _ in range(levels - 1)], reverse=True)
@@ -472,12 +478,29 @@ class GeneratorFaultTree(FaultTree):
             summation = 0
             tests = []
             for i in range(levels):
-                test = random.uniform(0.1, 1)
-                # print("i,", i)
-                tests.append(test)
-                # print(tests)
-                # print(test)
-                summation += test
+                # print(i)
+                if i == 0:
+                    test1 = random.uniform(0.9, 1)
+                    tests.append(test1)
+                    total = test1
+                elif i > 0 and i <3:
+                    test2 = random.uniform(0.001, 0.01)
+                    tests.append(test2)
+                    total += test2
+                elif i > 3 and i <7:
+                    test2 = random.uniform(0.0001, 0.001)
+                    tests.append(test2)
+                    total += test2
+                else:
+                    test = random.uniform(0.00001,0.00001)
+                    tests.append(test)
+                    total += test
+            # tests.append(test1)
+            # tests.append(test)
+            #     print(tests)
+            #     print("total", total)
+
+            summation += total
             # print("sum", summation)
             # ccf_group.factors = sorted([(_/summation) for _ in range(levels)], reverse=True)
             ccf_group.factors = sorted([(_ / summation) for _ in tests], reverse = True)
@@ -1049,7 +1072,7 @@ def manage_cmd_args(argv=None):
                         "--num-basic",
                         type=int,
                         help="# of basic events",
-                        default=1000,
+                        default=100,
                         metavar="int")
     parser.add_argument("-a",
                         "--num-args",
@@ -1107,7 +1130,7 @@ def manage_cmd_args(argv=None):
     parser.add_argument("--num-ccf",
                         type=int,
                         help="# of ccf groups",
-                        default=300,
+                        default=4,
                         metavar="int")
     parser.add_argument("--ccf-size",
                         type=int,
@@ -1117,7 +1140,7 @@ def manage_cmd_args(argv=None):
     parser.add_argument("--ccf-model",
                         type=str,
                         help="ccf model, user should use MGL or alpha-factor",
-                        default="alpha-factor")
+                        default="MGL")
                         # metavar="int")
     parser.add_argument("-o",
                         "--out",
