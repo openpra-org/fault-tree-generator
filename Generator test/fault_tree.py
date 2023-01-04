@@ -88,9 +88,6 @@ class BasicEvent(Event):
         """Produces the Aralia definition of the basic event."""
         printer('p(', self.name, ') = ', self.prob)
 
-    # with open("base-json.json", "r") as f:
-    #     base = json.load(f)
-
 
     def to_SAPHIRE_json_printer(self, printer):
 
@@ -247,6 +244,7 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
 
     def num_arguments(self):
         """Returns the number of arguments."""
+
         return sum(
             len(x) for x in (self.b_arguments, self.h_arguments,
                              self.g_arguments, self.u_arguments))
@@ -434,8 +432,8 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
             # JSON_format = ""
             if gate.operator != "null":
                 gateList[1]['gatetype'] = gate.operator
-                if gate.operator == "atleast":
-                    gateList[0]['gatetype'] = str(gate.k_num)
+                if gate.operator == "k/n":
+                    gateList[1]['gatetype'] = str(gate.k_num)
 
             num_g = int(str(len(gate.g_arguments)))
             num_b = int(str(len(gate.b_arguments)))
@@ -508,7 +506,7 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
             OpenPRA_JSON_format = ""
             if gate.operator != "null":
                 OpenPRA_JSON_format += "\"name\":\"" + str.upper(gate.operator) + " Gate:" + self.name.strip('root') + "\",\n" + '"description":""\n },'
-                if gate.operator == "atleast":
+                if gate.operator == "k/n":
                     OpenPRA_JSON_format += " min=\"" + str(gate.k_num) + "\""
                 OpenPRA_JSON_format += "\n"
             num_g = int(str(len(gate.g_arguments)))

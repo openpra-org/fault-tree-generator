@@ -8,6 +8,9 @@ import sys
 import json
 import itertools
 import argparse as ap
+from itertools import combinations
+from math import factorial
+from math import comb
 
 from fault_tree import BasicEvent, HouseEvent, Gate, CcfGroup, FaultTree
 
@@ -166,13 +169,23 @@ class Factors:  # pylint: disable=too-many-instance-attributes
         const_args = min_args[3:]
         const_weights = weights[3:]
         const_contrib = [x * y for x, y in zip(const_args, const_weights)]
+        # print(const_args)
+        # print(const_weights)
+        # print(const_contrib)
         # AND, OR, K/N gate types can have the varying number of args.
         var_args = min_args[:3]
         var_weights = weights[:3]
         var_contrib = [x * y for x, y in zip(var_args, var_weights)]
-
+        # print(var_args)
+        # print(var_weights)
+        # print(var_contrib)
         # AND, OR, K/N gate types can have the varying number of arguments.
         # Since the distribution is symmetric, the average is (max + min) / 2.
+        # print((2 * num_args - sum(var_contrib) - 2 * sum(const_contrib)) /
+        #         sum(var_weights))
+        # print(sum(var_contrib))
+        # print(sum(const_contrib))
+        # print(sum(var_weights))
         return ((2 * num_args - sum(var_contrib) - 2 * sum(const_contrib)) /
                 sum(var_weights))
 
@@ -187,6 +200,11 @@ class Factors:  # pylint: disable=too-many-instance-attributes
         self.__ratio = self.num_args * g_factor - 1
         self.__percent_basic = self.__ratio / (1 + self.__ratio)
         self.__percent_gate = 1 / (1 + self.__ratio)
+        # print(self.__max_args)
+        # print(g_factor)
+        # print(self.__ratio)
+        # print(self.__percent_basic)
+        # print(self.__percent_gate )
 
     def get_gate_weights(self):
         """Provides weights for gate types.
@@ -227,10 +245,12 @@ class Factors:  # pylint: disable=too-many-instance-attributes
             x / sum(self.__weights_g) for x in self.__weights_g
         ]
         self.__cum_dist = self.__norm_weights[:]
+        # print("self", self.__cum_dist )
         self.__cum_dist.insert(0, 0)
+        # print("self", self.__cum_dist)
         for i in range(1, len(self.__cum_dist)):
             self.__cum_dist[i] += self.__cum_dist[i - 1]
-
+        # print("self", self.__cum_dist[i])
     def get_random_operator(self):
         """Samples the gate operator.
 
@@ -239,8 +259,12 @@ class Factors:  # pylint: disable=too-many-instance-attributes
         """
         r_num = random.random()
         bin_num = 1
+        # print(r_num)
         while self.__cum_dist[bin_num] <= r_num:
+            # print("test", self.__cum_dist[bin_num])
             bin_num += 1
+            # print(bin_num)
+        # print(Factors.__OPERATORS[bin_num - 1])
         return Factors.__OPERATORS[bin_num - 1]
 
     def get_num_args(self, gate):
@@ -264,15 +288,19 @@ class Factors:  # pylint: disable=too-many-instance-attributes
         max_args = int(self.__max_args)
         # Dealing with the fractional part.
         if random.random() < (self.__max_args - max_args):
+            # print("max1",max_args)
             max_args += 1
+            # print("max2",max_args)
+
 
         if gate.operator == "atleast":
             if max_args < 3:
                 max_args = 3
             num_args = random.randint(3, max_args)
+            # print(num_args)
             gate.k_num = random.randint(2, num_args - 1)
             return num_args
-
+        # print("last", max_args)
         return random.randint(2, max_args)
 
     def get_percent_gate(self):
@@ -345,6 +373,7 @@ class Factors:  # pylint: disable=too-many-instance-attributes
         self.__num_gate = num_gate
         # Calculate the ratios
         alpha = self.__num_gate / self.num_basic
+        # print("alpha",alpha)
         common = max(self.common_g, self.common_b)
         min_common = 1 - (1 + alpha) / self.num_args / alpha
         if common < min_common:
@@ -403,6 +432,7 @@ class GeneratorFaultTree(FaultTree):
         gate = Gate("G" + str(len(self.gates) + 1),
                     self.factors.get_random_operator())
         self.gates.append(gate)
+        # print("gates", gate)
         return gate
 
     def construct_basic_event(self):
@@ -454,20 +484,24 @@ class GeneratorFaultTree(FaultTree):
 
         if ccf_group.model == "MGL":
             summation = 0
-            tests = []
+            beta_factors = []
             for i in range(levels-1):
-                test = random.uniform(0.1, 1)
-                tests.append(test)
-                    # print(test)
-            # print("test",tests)
+                if i == 0:
+                    beta1 = random.uniform(0.9, 1)
+                    beta_factors.append(beta1)
+                else:
+                    beta2 = random.uniform(0.001, 0.1)
+                    print("beta2",beta2)
+                    beta_factors.append(beta2)
             n = 1
+            tot = range(levels)
+            for i,k in zip(beta_factors,tot):
+                    ccf_factors = (1/comb(len(range(levels))-1,k))*(1 - i) * n
+                    n = i*n
+                    # print('n',n)
+                    ccf_group.factors.append(ccf_factors)
 
-            for i in tests:
-                ccf_factors = (1 - i) * n
-                n = i*n
-                ccf_group.factors.append(ccf_factors)
-
-            # print(ccf_group.factors)
+            # print(ccf_group.actors)
             # ccf_group.factors = sorted([(_* for _ in tests], reverse = True)
             # ccf_group.factors.append(ccf_group.factors)
             # print("ccf_test", ccf_group.factors)
@@ -476,34 +510,30 @@ class GeneratorFaultTree(FaultTree):
 
         else:
             summation = 0
-            tests = []
+            alpha_factors = []
             for i in range(levels):
                 # print(i)
                 if i == 0:
-                    test1 = random.uniform(0.9, 1)
-                    tests.append(test1)
-                    total = test1
+                    alpha1 = random.uniform(0.9, 1)
+                    alpha_factors.append(alpha1)
+                    total = alpha1
                 elif i > 0 and i <3:
-                    test2 = random.uniform(0.001, 0.01)
-                    tests.append(test2)
-                    total += test2
+                    alpha2 = random.uniform(0.001, 0.01)
+                    alpha_factors.append(alpha2)
+                    total += alpha2
                 elif i > 3 and i <7:
-                    test2 = random.uniform(0.0001, 0.001)
-                    tests.append(test2)
-                    total += test2
+                    alpha2 = random.uniform(0.0001, 0.001)
+                    alpha_factors.append(alpha2)
+                    total += alpha2
                 else:
-                    test = random.uniform(0.00001,0.00001)
-                    tests.append(test)
-                    total += test
-            # tests.append(test1)
-            # tests.append(test)
-            #     print(tests)
-            #     print("total", total)
+                    alpha = random.uniform(0.00001,0.00001)
+                    alpha_factors.append(alpha)
+                    total += alpha
 
             summation += total
             # print("sum", summation)
             # ccf_group.factors = sorted([(_/summation) for _ in range(levels)], reverse=True)
-            ccf_group.factors = sorted([(_ / summation) for _ in tests], reverse = True)
+            ccf_group.factors = sorted([(_ / summation) for _ in alpha_factors], reverse = True)
             # print("levels", range(levels))
 
             # ccf_group.factors = sorted([(random.uniform(0.1, 1)) for _ in range(levels)], reverse=True)
@@ -539,16 +569,19 @@ def candidate_gates(common_gate):
     orphans = [x for x in common_gate if not x.parents]
     random.shuffle(orphans)
     for i in orphans:
+        # print(i)
         yield i
 
     single_parent = [x for x in common_gate if len(x.parents) == 1]
     random.shuffle(single_parent)
     for i in single_parent:
+        # print(i)
         yield i
 
     multi_parent = [x for x in common_gate if len(x.parents) > 1]
     random.shuffle(multi_parent)
     for i in multi_parent:
+        # print(i)
         yield i
 
 
@@ -613,10 +646,12 @@ def init_gates(gates_queue, common_basic, common_gate, fault_tree):
         fault_tree: The fault tree container of all events and constructs.
     """
     # Get an intermediate gate to initialize breadth-first
+    # print(len(fault_tree.basic_events))
     gate = gates_queue.popleft()
-
+    # print(gate)
     num_arguments = fault_tree.factors.get_num_args(gate)
-
+    # print(num_arguments)
+    # print(gate.num_arguments())
     ancestors = None  # needed for cycle prevention
     max_tries = len(common_gate)  # the number of maximum tries
     num_tries = 0  # the number of tries to get a common gate
@@ -684,6 +719,7 @@ def generate_ccf_groups(fault_tree):
     """
     if fault_tree.factors.num_ccf:
         members = fault_tree.basic_events[:]
+        # print("members", len(members))
         random.shuffle(members)
         first_mem = 0
         last_mem = 0
@@ -1125,7 +1161,7 @@ def manage_cmd_args(argv=None):
     parser.add_argument("--num-house",
                         type=int,
                         help="# of house events",
-                        default=0,
+                        default=10.0,
                         metavar="int")
     parser.add_argument("--num-ccf",
                         type=int,
@@ -1140,7 +1176,7 @@ def manage_cmd_args(argv=None):
     parser.add_argument("--ccf-model",
                         type=str,
                         help="ccf model, user should use MGL or alpha-factor",
-                        default="MGL")
+                        default="alpha-factor")
                         # metavar="int")
     parser.add_argument("-o",
                         "--out",
