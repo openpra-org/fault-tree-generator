@@ -487,12 +487,36 @@ class GeneratorFaultTree(FaultTree):
             beta_factors = []
             for i in range(levels-1):
                 if i == 0:
-                    beta1 = random.uniform(0.9, 1)
-                    beta_factors.append(beta1)
+                    beta = random.uniform(5.0e-3,1.0e-1)
+                    print("beta",beta)
+                    beta_factors.append(beta)
+                elif i == 1:
+                    gama = random.uniform(beta*5-beta/5, beta*5+beta/5)
+                    print("delta:",gama)
+                    beta_factors.append(gama)
+                elif i == 2:
+                    delta = random.uniform(beta * 5 - beta / 5, beta * 5 + beta / 5)
+                    beta_factors.append(delta)
+                elif i == 3:
+                    Epsilon = random.uniform(beta * 5 - beta / 5, beta * 5 + beta / 5)
+                    beta_factors.append(Epsilon)
+                elif i ==4:
+                    Zeta = random.uniform(beta * 5 - beta / 5, beta * 5 + beta / 5)
+                    beta_factors.append(Zeta)
+                elif i ==5:
+                    Eta = random.uniform(beta * 5 - beta / 5, beta * 5 + beta / 5)
+                    beta_factors.append(Eta)
+                elif i ==6:
+                    Theta = random.uniform(beta * 5 - beta / 5, beta * 5 + beta / 5)
+                    beta_factors.append(Theta)
+                elif i ==7:
+                    lota = random.uniform(beta * 5 - beta / 5, beta * 5 + beta / 5)
+                    beta_factors.append(lota)
                 else:
-                    beta2 = random.uniform(0.001, 0.1)
-                    print("beta2",beta2)
-                    beta_factors.append(beta2)
+                    kappa = random.uniform(beta * 5 - beta / 5, beta * 5 + beta / 5)
+                    beta_factors.append(kappa)
+
+
             n = 1
             tot = range(levels)
             for i,k in zip(beta_factors,tot):
@@ -1176,7 +1200,7 @@ def manage_cmd_args(argv=None):
     parser.add_argument("--ccf-model",
                         type=str,
                         help="ccf model, user should use MGL or alpha-factor",
-                        default="alpha-factor")
+                        default="MGL")
                         # metavar="int")
     parser.add_argument("-o",
                         "--out",
