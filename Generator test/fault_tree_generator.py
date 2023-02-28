@@ -409,6 +409,7 @@ class GeneratorFaultTree(FaultTree):
         """
         super(GeneratorFaultTree, self).__init__(name)
         self.factors = factors
+        print("self.factors_f", self.factors)
 
     def construct_top_gate(self, root_name):
         """Constructs and assigns a new gate suitable for being a root.
@@ -447,6 +448,8 @@ class GeneratorFaultTree(FaultTree):
         self.basic_events.append(basic_event)
         return basic_event
 
+
+
     def construct_house_event(self):
         """Constructs a house event with a unique identifier.
 
@@ -468,9 +471,13 @@ class GeneratorFaultTree(FaultTree):
             A fully initialized CCF group with random factors.
         """
         assert len(members) > 1
+
         ccf_group = CcfGroup("CCF" + str(len(self.ccf_groups) + 1))
         self.ccf_groups.append(ccf_group)
+
+
         ccf_group.members = members
+
         ccf_group.prob = random.uniform(self.factors.min_prob,
                                         self.factors.max_prob)
         ccf_group.model = self.factors.ccf_model
@@ -482,17 +489,21 @@ class GeneratorFaultTree(FaultTree):
         # ccf_group.factors = [random.uniform(0.1, 1) for _ in range(levels - 1)]
         # sorted(iterable, key=key, reverse=reverse)
 
+        # ccf_event = Ccf_Event("CF", self.factors.num_ccf)
+        # self.ccf_events.append(ccf_event)
+        # return ccf_event
+
         if ccf_group.model == "MGL":
             summation = 0
             beta_factors = []
             for i in range(levels-1):
                 if i == 0:
                     beta = random.uniform(5.0e-3,1.0e-1)
-                    print("beta",beta)
+                    # print("beta",beta)
                     beta_factors.append(beta)
                 elif i == 1:
                     gama = random.uniform(beta*5-beta/5, beta*5+beta/5)
-                    print("delta:",gama)
+                    # print("delta:",gama)
                     beta_factors.append(gama)
                 elif i == 2:
                     delta = random.uniform(beta * 5 - beta / 5, beta * 5 + beta / 5)
@@ -742,6 +753,8 @@ def generate_ccf_groups(fault_tree):
         fault_tree: The fault tree container of all events and constructs.
     """
     if fault_tree.factors.num_ccf:
+        num_ccf_total = fault_tree.factors.num_ccf
+        print("num_ccf", num_ccf_total)
         members = fault_tree.basic_events[:]
         # print("members", len(members))
         random.shuffle(members)
@@ -757,8 +770,10 @@ def generate_ccf_groups(fault_tree):
             if last_mem > len(members):
                 break
             fault_tree.construct_ccf_group(members[first_mem:last_mem])
+            print("fir",members)
             first_mem = last_mem
         fault_tree.non_ccf_events = members[first_mem:]
+
 
 
 
@@ -988,9 +1003,6 @@ def write_info_OpenPRA_JSON_printer(fault_tree, printer, seed):
     factors = fault_tree.factors
     printer('{')
 
-
-
-
 def get_size_summary(fault_tree, printer):
     """Gathers information about the size of the fault tree.
 
@@ -1132,7 +1144,7 @@ def manage_cmd_args(argv=None):
                         "--num-basic",
                         type=int,
                         help="# of basic events",
-                        default=100,
+                        default=1000,
                         metavar="int")
     parser.add_argument("-a",
                         "--num-args",
@@ -1145,7 +1157,7 @@ def manage_cmd_args(argv=None):
                         nargs="+",
                         metavar="float",
                         help="weights for [AND, OR, K/N, NOT, XOR] gates",
-                        default=[1, 3, 0, 0, 0])
+                        default=[1, 5, 0, 0, 0])
     parser.add_argument("--common-b",
                         type=float,
                         default=0.1,
@@ -1190,17 +1202,17 @@ def manage_cmd_args(argv=None):
     parser.add_argument("--num-ccf",
                         type=int,
                         help="# of ccf groups",
-                        default=4,
+                        default=8,
                         metavar="int")
     parser.add_argument("--ccf-size",
                         type=int,
                         help="ccf max size, max in SAPHIRE is 8",
-                        default=8,
+                        default=4,
                         metavar="int")
     parser.add_argument("--ccf-model",
                         type=str,
                         help="ccf model, user should use MGL or alpha-factor",
-                        default="MGL")
+                        default="alpha-factor")
                         # metavar="int")
     parser.add_argument("-o",
                         "--out",
