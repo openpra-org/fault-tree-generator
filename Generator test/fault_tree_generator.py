@@ -409,7 +409,7 @@ class GeneratorFaultTree(FaultTree):
         """
         super(GeneratorFaultTree, self).__init__(name)
         self.factors = factors
-        print("self.factors_f", self.factors)
+        # print("self.factors_f", self.factors)
 
     def construct_top_gate(self, root_name):
         """Constructs and assigns a new gate suitable for being a root.
@@ -754,7 +754,7 @@ def generate_ccf_groups(fault_tree):
     """
     if fault_tree.factors.num_ccf:
         num_ccf_total = fault_tree.factors.num_ccf
-        print("num_ccf", num_ccf_total)
+        # print("num_ccf", num_ccf_total)
         members = fault_tree.basic_events[:]
         # print("members", len(members))
         random.shuffle(members)
@@ -770,7 +770,7 @@ def generate_ccf_groups(fault_tree):
             if last_mem > len(members):
                 break
             fault_tree.construct_ccf_group(members[first_mem:last_mem])
-            print("fir",members)
+            # print("fir",members)
             first_mem = last_mem
         fault_tree.non_ccf_events = members[first_mem:]
 
@@ -888,7 +888,7 @@ def write_info_JSON_printer(fault_tree, printer, seed):
     printer('"ettruncopt": "NormalProbCutOff",')
     printer('"fttruncopt": "GlobalProbCutOff",')
     printer('"sizeopt": "ENoTrunc",')
-    printer('"ettruncval": 1.000E-13,')
+    printer('"ettruncval": 1.000E-14,')
     printer('"fttruncval": 1.000E-14,')
     printer('"sizeval": 99,')
     printer('"transrepl": false,')
@@ -953,15 +953,15 @@ def write_info_SAPHSOLVE_JSON_object(fault_tree, base, seed):
     base['saphiresolveinput']['header']['fthigh'] = 139
     base['saphiresolveinput']['header']['sqcount'] = 0
     base['saphiresolveinput']['header']['sqhigh'] = 0
-    base['saphiresolveinput']['header']['becount'] = 4 + factors.num_basic
+    base['saphiresolveinput']['header']['becount'] = 4 + factors.num_basic + factors.num_ccf
     base['saphiresolveinput']['header']['behigh'] = 99996
     base['saphiresolveinput']['header']['mthigh'] = 1
     base['saphiresolveinput']['header']['phhigh'] = 1
     base['saphiresolveinput']['header']['truncparam']['ettruncopt'] = 'NormalProbCutOff'
     base['saphiresolveinput']['header']['truncparam']['fttruncopt'] = 'GlobalProbCutOff'
     base['saphiresolveinput']['header']['truncparam']['sizeopt'] = 'ENoTrunc'
-    base['saphiresolveinput']['header']['truncparam']['ettruncval'] = 1.000E-100
-    base['saphiresolveinput']['header']['truncparam']['fttruncval'] = 1.000E-100
+    base['saphiresolveinput']['header']['truncparam']['ettruncval'] = 1.000E-14
+    base['saphiresolveinput']['header']['truncparam']['fttruncval'] = 1.000E-14
     base['saphiresolveinput']['header']['truncparam']['sizeval'] = 99
     base['saphiresolveinput']['header']['truncparam']['transrepl'] = test
     base['saphiresolveinput']['header']['truncparam']['transzones'] = test
@@ -1144,7 +1144,7 @@ def manage_cmd_args(argv=None):
                         "--num-basic",
                         type=int,
                         help="# of basic events",
-                        default=1000,
+                        default=100,
                         metavar="int")
     parser.add_argument("-a",
                         "--num-args",
@@ -1157,7 +1157,7 @@ def manage_cmd_args(argv=None):
                         nargs="+",
                         metavar="float",
                         help="weights for [AND, OR, K/N, NOT, XOR] gates",
-                        default=[1, 5, 0, 0, 0])
+                        default=[1, 3, 0, 0, 0])
     parser.add_argument("--common-b",
                         type=float,
                         default=0.1,
@@ -1186,28 +1186,28 @@ def manage_cmd_args(argv=None):
                         help="# of gates (discards parents-b/g and common-b/g)")
     parser.add_argument("--max-prob",
                         type=float,
-                        default=0.1,
+                        default=0.001,
                         metavar="float",
                         help="maximum probability for basic events")
     parser.add_argument("--min-prob",
                         type=float,
-                        default=0.01,
+                        default=0.00001,
                         metavar="float",
                         help="minimum probability for basic events")
     parser.add_argument("--num-house",
                         type=int,
                         help="# of house events",
-                        default=10.0,
+                        default=0.0,
                         metavar="int")
     parser.add_argument("--num-ccf",
                         type=int,
                         help="# of ccf groups",
-                        default=8,
+                        default=2,
                         metavar="int")
     parser.add_argument("--ccf-size",
                         type=int,
                         help="ccf max size, max in SAPHIRE is 8",
-                        default=4,
+                        default=3,
                         metavar="int")
     parser.add_argument("--ccf-model",
                         type=str,

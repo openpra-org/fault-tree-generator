@@ -712,7 +712,7 @@ class CcfGroup:  # pylint: disable=too-few-public-methods
         ccf_values = []
         # print (len(self.factors))
         for factor in self.factors:
-            Q= (1/comb(3,3))*factor*Q_total
+            Q= self.prob
 
             ccf_values.append(Q)
         return ccf_values
@@ -729,7 +729,7 @@ class CcfGroup:  # pylint: disable=too-few-public-methods
             self.values = CcfGroup.to_SAPHIRE_json_ccf_BE(self)
         # counter = 0
         eventList = base['saphiresolveinput']['eventlist']
-        eventList[4]['id'] = self.name.strip("CCF") + "00000"
+        eventList[4]['id'] = int(self.name.strip("CCF") + "001")
         eventList[4]['corrgate'] = 0
         eventList[4]['name'] = self.name
         eventList[4]['evworkspacepair']['ph'] = 1
@@ -1002,11 +1002,10 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
                             if self.ccf_groups else self.basic_events):
             basic_event.to_SAPHIRE_json_object(base)
 
-        # for ccf_group in self.ccf_groups:
-        #     ccf_group.to_SAPHIRE_json_object(base)
-        #     ccf_group.to_SAPHIRE_json_ccf(base)
+        for ccf_group in self.ccf_groups:
+            ccf_group.to_SAPHIRE_json_object(base)
+            ccf_group.to_SAPHIRE_json_ccf(base)
         #     # print("CCF",self.name)
-
 
         eventList = base['saphiresolveinput']['eventlist']
         with open("SAPHSOLVE_INPUT.JSInp", "w") as f:
@@ -1022,11 +1021,13 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
                 for key, value in obj.items():
                     if key == 'eventinput' and num in value:
                         value.append(add_num)
+                        obj['numinputs'] += 1
                     else:
                         check_and_add_number(value, num, add_num)
             elif isinstance(obj, list):
                 for item in obj:
                     check_and_add_number(item, num, add_num)
+
 
         # instance = CcfGroup()
         # ccf_instance = ccf_instance.to_SAPHIRE_json_ccf(base)
@@ -1035,14 +1036,14 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
         i = 1
         for ccf_group in self.ccf_groups:
 
-            ccf_group.to_SAPHIRE_json_object(base)
-            ccf_group.to_SAPHIRE_json_ccf(base)
+            # ccf_group.to_SAPHIRE_json_object(base)
+            # ccf_group.to_SAPHIRE_json_ccf(base)
 
             # first_group = self.ccf_groups[0]
             for member in ccf_group.members:
             # for member in first_group.members:
                 print(member.name)
-                check_and_add_number(base, int(member.name.strip("B")), int(ccf_group.name.strip("\"CCF") + "00000"))
+                check_and_add_number(base, int(member.name.strip("B")), int(ccf_group.name.strip("\"CCF") + "001"))
             # first_group = self.ccf_groups[]
             # for member in ccf_group.members[0]:
             #     print(member.name)
