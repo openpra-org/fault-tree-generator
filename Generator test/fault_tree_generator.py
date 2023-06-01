@@ -1,11 +1,16 @@
 # pylint: disable=too-many-lines
 
 from collections import deque
+import numpy
 import random
+import math
 import sys
 import json
 import itertools
 import argparse as ap
+from itertools import combinations
+from math import factorial
+from math import comb
 
 from fault_tree import BasicEvent, HouseEvent, Gate, CcfGroup, FaultTree
 
@@ -60,6 +65,8 @@ class Factors:  # pylint: disable=too-many-instance-attributes
 
         # Special case with the constrained number of gates
         self.__num_gate = None  # If set, all other factors get affected.
+        self.ccf_model = None
+        self.ccf_size = None
 
     def set_min_max_prob(self, min_value, max_value):
         """Sets the probability boundaries for basic events.
@@ -108,7 +115,7 @@ class Factors:  # pylint: disable=too-many-instance-attributes
         self.parents_b = parents_b
         self.parents_g = parents_g
 
-    def set_num_factors(self, num_args, num_basic, num_house=0, num_ccf=0):
+    def set_num_factors(self, num_args, num_basic, num_house=0, num_ccf=0, ccf_model = 0, ccf_size =0):
         """Sets the size factors.
 
         Args:
@@ -116,6 +123,7 @@ class Factors:  # pylint: disable=too-many-instance-attributes
             num_basic: The number of basic events.
             num_house: The number of house events.
             num_ccf: The number of ccf groups.
+            ccf_model = model used to solve CCF, MGL or alpha-factor
 
         Raises:
             FactorError: Invalid values or setup.
@@ -136,7 +144,11 @@ class Factors:  # pylint: disable=too-many-instance-attributes
         self.num_basic = num_basic
         self.num_house = num_house
         self.num_ccf = num_ccf
-
+        self.ccf_model = ccf_model
+        self.ccf_size = ccf_size
+        # print(ccf_model)
+        # print(ccf_size)
+    #
     @staticmethod
     def __calculate_max_args(num_args, weights):
         """Calculates the maximum number of arguments for sampling.
@@ -157,13 +169,23 @@ class Factors:  # pylint: disable=too-many-instance-attributes
         const_args = min_args[3:]
         const_weights = weights[3:]
         const_contrib = [x * y for x, y in zip(const_args, const_weights)]
+        # print(const_args)
+        # print(const_weights)
+        # print(const_contrib)
         # AND, OR, K/N gate types can have the varying number of args.
         var_args = min_args[:3]
         var_weights = weights[:3]
         var_contrib = [x * y for x, y in zip(var_args, var_weights)]
-
+        # print(var_args)
+        # print(var_weights)
+        # print(var_contrib)
         # AND, OR, K/N gate types can have the varying number of arguments.
         # Since the distribution is symmetric, the average is (max + min) / 2.
+        # print((2 * num_args - sum(var_contrib) - 2 * sum(const_contrib)) /
+        #         sum(var_weights))
+        # print(sum(var_contrib))
+        # print(sum(const_contrib))
+        # print(sum(var_weights))
         return ((2 * num_args - sum(var_contrib) - 2 * sum(const_contrib)) /
                 sum(var_weights))
 
@@ -178,6 +200,11 @@ class Factors:  # pylint: disable=too-many-instance-attributes
         self.__ratio = self.num_args * g_factor - 1
         self.__percent_basic = self.__ratio / (1 + self.__ratio)
         self.__percent_gate = 1 / (1 + self.__ratio)
+        # print(self.__max_args)
+        # print(g_factor)
+        # print(self.__ratio)
+        # print(self.__percent_basic)
+        # print(self.__percent_gate )
 
     def get_gate_weights(self):
         """Provides weights for gate types.
@@ -218,10 +245,12 @@ class Factors:  # pylint: disable=too-many-instance-attributes
             x / sum(self.__weights_g) for x in self.__weights_g
         ]
         self.__cum_dist = self.__norm_weights[:]
+        # print("self", self.__cum_dist )
         self.__cum_dist.insert(0, 0)
+        # print("self", self.__cum_dist)
         for i in range(1, len(self.__cum_dist)):
             self.__cum_dist[i] += self.__cum_dist[i - 1]
-
+        # print("self", self.__cum_dist[i])
     def get_random_operator(self):
         """Samples the gate operator.
 
@@ -230,8 +259,12 @@ class Factors:  # pylint: disable=too-many-instance-attributes
         """
         r_num = random.random()
         bin_num = 1
+        # print(r_num)
         while self.__cum_dist[bin_num] <= r_num:
+            # print("test", self.__cum_dist[bin_num])
             bin_num += 1
+            # print(bin_num)
+        # print(Factors.__OPERATORS[bin_num - 1])
         return Factors.__OPERATORS[bin_num - 1]
 
     def get_num_args(self, gate):
@@ -255,15 +288,19 @@ class Factors:  # pylint: disable=too-many-instance-attributes
         max_args = int(self.__max_args)
         # Dealing with the fractional part.
         if random.random() < (self.__max_args - max_args):
+            # print("max1",max_args)
             max_args += 1
+            # print("max2",max_args)
+
 
         if gate.operator == "atleast":
             if max_args < 3:
                 max_args = 3
             num_args = random.randint(3, max_args)
+            # print(num_args)
             gate.k_num = random.randint(2, num_args - 1)
             return num_args
-
+        # print("last", max_args)
         return random.randint(2, max_args)
 
     def get_percent_gate(self):
@@ -336,6 +373,7 @@ class Factors:  # pylint: disable=too-many-instance-attributes
         self.__num_gate = num_gate
         # Calculate the ratios
         alpha = self.__num_gate / self.num_basic
+        # print("alpha",alpha)
         common = max(self.common_g, self.common_b)
         min_common = 1 - (1 + alpha) / self.num_args / alpha
         if common < min_common:
@@ -371,6 +409,7 @@ class GeneratorFaultTree(FaultTree):
         """
         super(GeneratorFaultTree, self).__init__(name)
         self.factors = factors
+        # print("self.factors_f", self.factors)
 
     def construct_top_gate(self, root_name):
         """Constructs and assigns a new gate suitable for being a root.
@@ -394,6 +433,7 @@ class GeneratorFaultTree(FaultTree):
         gate = Gate("G" + str(len(self.gates) + 1),
                     self.factors.get_random_operator())
         self.gates.append(gate)
+        # print("gates", gate)
         return gate
 
     def construct_basic_event(self):
@@ -407,6 +447,8 @@ class GeneratorFaultTree(FaultTree):
             random.uniform(self.factors.min_prob, self.factors.max_prob),self.factors.num_basic)
         self.basic_events.append(basic_event)
         return basic_event
+
+
 
     def construct_house_event(self):
         """Constructs a house event with a unique identifier.
@@ -429,14 +471,124 @@ class GeneratorFaultTree(FaultTree):
             A fully initialized CCF group with random factors.
         """
         assert len(members) > 1
+
         ccf_group = CcfGroup("CCF" + str(len(self.ccf_groups) + 1))
         self.ccf_groups.append(ccf_group)
+
+
         ccf_group.members = members
+
         ccf_group.prob = random.uniform(self.factors.min_prob,
                                         self.factors.max_prob)
-        ccf_group.model = "MGL"
-        levels = random.randint(2, len(members))
-        ccf_group.factors = [random.uniform(0.1, 1) for _ in range(levels - 1)]
+        ccf_group.model = self.factors.ccf_model
+
+        # ccf_group.model = "alpha-factor"
+        # levels = random.randint(2, len(members)) # the levels should be equal to the number of BEs for alpha-factor model and -1 for MGL
+        levels = len(members)
+        # print("levels=",levels)
+        # ccf_group.factors = [random.uniform(0.1, 1) for _ in range(levels - 1)]
+        # sorted(iterable, key=key, reverse=reverse)
+
+        # ccf_event = Ccf_Event("CF", self.factors.num_ccf)
+        # self.ccf_events.append(ccf_event)
+        # return ccf_event
+
+        if ccf_group.model == "MGL":
+            summation = 0
+            beta_factors = []
+            for i in range(levels-1):
+                if i == 0:
+                    beta = random.uniform(5.0e-3,1.0e-1)
+                    # print("beta",beta)
+                    beta_factors.append(beta)
+                elif i == 1:
+                    gama = random.uniform(beta*5-beta/5, beta*5+beta/5)
+                    # print("delta:",gama)
+                    beta_factors.append(gama)
+                elif i == 2:
+                    delta = random.uniform(beta * 5 - beta / 5, beta * 5 + beta / 5)
+                    beta_factors.append(delta)
+                elif i == 3:
+                    Epsilon = random.uniform(beta * 5 - beta / 5, beta * 5 + beta / 5)
+                    beta_factors.append(Epsilon)
+                elif i ==4:
+                    Zeta = random.uniform(beta * 5 - beta / 5, beta * 5 + beta / 5)
+                    beta_factors.append(Zeta)
+                elif i ==5:
+                    Eta = random.uniform(beta * 5 - beta / 5, beta * 5 + beta / 5)
+                    beta_factors.append(Eta)
+                elif i ==6:
+                    Theta = random.uniform(beta * 5 - beta / 5, beta * 5 + beta / 5)
+                    beta_factors.append(Theta)
+                elif i ==7:
+                    lota = random.uniform(beta * 5 - beta / 5, beta * 5 + beta / 5)
+                    beta_factors.append(lota)
+                else:
+                    kappa = random.uniform(beta * 5 - beta / 5, beta * 5 + beta / 5)
+                    beta_factors.append(kappa)
+
+
+            n = 1
+            tot = range(levels)
+            for i,k in zip(beta_factors,tot):
+                    ccf_factors = (1/comb(len(range(levels))-1,k))*(1 - i) * n
+                    n = i*n
+                    # print('n',n)
+                    ccf_group.factors.append(ccf_factors)
+
+            # print(ccf_group.actors)
+            # ccf_group.factors = sorted([(_* for _ in tests], reverse = True)
+            # ccf_group.factors.append(ccf_group.factors)
+            # print("ccf_test", ccf_group.factors)
+
+            # ccf_group.factors = sorted([(random.uniform(0.1, 1)) for _ in range(levels - 1)], reverse=True)
+
+        else:
+            summation = 0
+            alpha_factors = []
+            for i in range(levels):
+                # print(i)
+                if i == 0:
+                    alpha1 = random.uniform(0.9, 1)
+                    alpha_factors.append(alpha1)
+                    total = alpha1
+                elif i > 0 and i <3:
+                    alpha2 = random.uniform(0.001, 0.01)
+                    alpha_factors.append(alpha2)
+                    total += alpha2
+                elif i > 3 and i <7:
+                    alpha2 = random.uniform(0.0001, 0.001)
+                    alpha_factors.append(alpha2)
+                    total += alpha2
+                else:
+                    alpha = random.uniform(0.00001,0.00001)
+                    alpha_factors.append(alpha)
+                    total += alpha
+
+            summation += total
+            # print("sum", summation)
+            # ccf_group.factors = sorted([(_/summation) for _ in range(levels)], reverse=True)
+            ccf_group.factors = sorted([(_ / summation) for _ in alpha_factors], reverse = True)
+            # print("levels", range(levels))
+
+            # ccf_group.factors = sorted([(random.uniform(0.1, 1)) for _ in range(levels)], reverse=True)
+            # test_sum = sum(ccf_group.factors)
+            # ccf_group.factors.append(ccf_group.factors)
+            # print(ccf_group.factors)
+
+            # for i in ccf_group.factors:
+            #     print(i)
+            #     store += i
+            #     print(store)
+            # test = list(map(float, ccf_group.factors))
+            # total = math.fsum(test)
+            # print(test)
+
+            # print(sum(ccf_group.factors))
+            # w = numpy.array(ccf_group.factors)
+            # print("test",w)
+            # print("ccf_test",ccf_group.factors)
+            # print("tests_sum",summ)
         return ccf_group
 
 
@@ -452,16 +604,19 @@ def candidate_gates(common_gate):
     orphans = [x for x in common_gate if not x.parents]
     random.shuffle(orphans)
     for i in orphans:
+        # print(i)
         yield i
 
     single_parent = [x for x in common_gate if len(x.parents) == 1]
     random.shuffle(single_parent)
     for i in single_parent:
+        # print(i)
         yield i
 
     multi_parent = [x for x in common_gate if len(x.parents) > 1]
     random.shuffle(multi_parent)
     for i in multi_parent:
+        # print(i)
         yield i
 
 
@@ -526,10 +681,12 @@ def init_gates(gates_queue, common_basic, common_gate, fault_tree):
         fault_tree: The fault tree container of all events and constructs.
     """
     # Get an intermediate gate to initialize breadth-first
+    # print(len(fault_tree.basic_events))
     gate = gates_queue.popleft()
-
+    # print(gate)
     num_arguments = fault_tree.factors.get_num_args(gate)
-
+    # print(num_arguments)
+    # print(gate.num_arguments())
     ancestors = None  # needed for cycle prevention
     max_tries = len(common_gate)  # the number of maximum tries
     num_tries = 0  # the number of tries to get a common gate
@@ -596,19 +753,28 @@ def generate_ccf_groups(fault_tree):
         fault_tree: The fault tree container of all events and constructs.
     """
     if fault_tree.factors.num_ccf:
+        num_ccf_total = fault_tree.factors.num_ccf
+        # print("num_ccf", num_ccf_total)
         members = fault_tree.basic_events[:]
+        # print("members", len(members))
         random.shuffle(members)
         first_mem = 0
         last_mem = 0
         while len(fault_tree.ccf_groups) < fault_tree.factors.num_ccf:
             max_args = int(2 * fault_tree.factors.num_args - 2)
+            max_args = fault_tree.factors.ccf_size
+            # print(max_args)
             group_size = random.randint(2, max_args)
+            # print(group_size)
             last_mem = first_mem + group_size
             if last_mem > len(members):
                 break
             fault_tree.construct_ccf_group(members[first_mem:last_mem])
+            # print("fir",members)
             first_mem = last_mem
         fault_tree.non_ccf_events = members[first_mem:]
+
+
 
 
 def generate_fault_tree(ft_name, root_name, factors):
@@ -722,7 +888,7 @@ def write_info_JSON_printer(fault_tree, printer, seed):
     printer('"ettruncopt": "NormalProbCutOff",')
     printer('"fttruncopt": "GlobalProbCutOff",')
     printer('"sizeopt": "ENoTrunc",')
-    printer('"ettruncval": 1.000E-13,')
+    printer('"ettruncval": 1.000E-14,')
     printer('"fttruncval": 1.000E-14,')
     printer('"sizeval": 99,')
     printer('"transrepl": false,')
@@ -787,14 +953,14 @@ def write_info_SAPHSOLVE_JSON_object(fault_tree, base, seed):
     base['saphiresolveinput']['header']['fthigh'] = 139
     base['saphiresolveinput']['header']['sqcount'] = 0
     base['saphiresolveinput']['header']['sqhigh'] = 0
-    base['saphiresolveinput']['header']['becount'] = 4 + factors.num_basic
+    base['saphiresolveinput']['header']['becount'] = 4 + factors.num_basic + factors.num_ccf
     base['saphiresolveinput']['header']['behigh'] = 99996
     base['saphiresolveinput']['header']['mthigh'] = 1
     base['saphiresolveinput']['header']['phhigh'] = 1
     base['saphiresolveinput']['header']['truncparam']['ettruncopt'] = 'NormalProbCutOff'
     base['saphiresolveinput']['header']['truncparam']['fttruncopt'] = 'GlobalProbCutOff'
     base['saphiresolveinput']['header']['truncparam']['sizeopt'] = 'ENoTrunc'
-    base['saphiresolveinput']['header']['truncparam']['ettruncval'] = 1.000E-13
+    base['saphiresolveinput']['header']['truncparam']['ettruncval'] = 1.000E-14
     base['saphiresolveinput']['header']['truncparam']['fttruncval'] = 1.000E-14
     base['saphiresolveinput']['header']['truncparam']['sizeval'] = 99
     base['saphiresolveinput']['header']['truncparam']['transrepl'] = test
@@ -815,9 +981,6 @@ def write_info_SAPHSOLVE_JSON_object(fault_tree, base, seed):
     base['saphiresolveinput']['sysgatelist'][0]['eventid'] = 99996
     base['saphiresolveinput']['sysgatelist'][0]['gatecomp'] = int(fault_tree.top_gate.name.strip('root'))
     base['saphiresolveinput']['sysgatelist'][0]['comppos'] = 0
-    # base['saphiresolveinput']['sysgatelist'][0]['compflag'] = ','
-    # base['saphiresolveinput']['sysgatelist'][0]['gateflag'] = ','
-    # base['saphiresolveinput']['sysgatelist'][0]['gatet'] = ''
     base['saphiresolveinput']['sysgatelist'][0]['bddsuccess'] = test
     base['saphiresolveinput']['sysgatelist'][0]['done'] = test
     """faulttreelist"""
@@ -839,9 +1002,6 @@ def write_info_OpenPRA_JSON_printer(fault_tree, printer, seed):
     """
     factors = fault_tree.factors
     printer('{')
-
-
-
 
 def get_size_summary(fault_tree, printer):
     """Gathers information about the size of the fault tree.
@@ -997,7 +1157,7 @@ def manage_cmd_args(argv=None):
                         nargs="+",
                         metavar="float",
                         help="weights for [AND, OR, K/N, NOT, XOR] gates",
-                        default=[1, 1, 0, 0, 0])
+                        default=[1, 3, 0, 0, 0])
     parser.add_argument("--common-b",
                         type=float,
                         default=0.1,
@@ -1026,24 +1186,34 @@ def manage_cmd_args(argv=None):
                         help="# of gates (discards parents-b/g and common-b/g)")
     parser.add_argument("--max-prob",
                         type=float,
-                        default=0.1,
+                        default=0.001,
                         metavar="float",
                         help="maximum probability for basic events")
     parser.add_argument("--min-prob",
                         type=float,
-                        default=0.01,
+                        default=0.00001,
                         metavar="float",
                         help="minimum probability for basic events")
     parser.add_argument("--num-house",
                         type=int,
                         help="# of house events",
-                        default=0,
+                        default=0.0,
                         metavar="int")
     parser.add_argument("--num-ccf",
                         type=int,
                         help="# of ccf groups",
-                        default=0,
+                        default=2,
                         metavar="int")
+    parser.add_argument("--ccf-size",
+                        type=int,
+                        help="ccf max size, max in SAPHIRE is 8",
+                        default=3,
+                        metavar="int")
+    parser.add_argument("--ccf-model",
+                        type=str,
+                        help="ccf model, user should use MGL or alpha-factor",
+                        default="alpha-factor")
+                        # metavar="int")
     parser.add_argument("-o",
                         "--out",
                         type=str,
@@ -1087,7 +1257,7 @@ def setup_factors(args):
     factors.set_common_event_factors(args.common_b, args.common_g,
                                      args.parents_b, args.parents_g)
     factors.set_num_factors(args.num_args, args.num_basic, args.num_house,
-                            args.num_ccf)
+                            args.num_ccf,args.ccf_model, args.ccf_size)
     factors.set_gate_weights([float(i) for i in args.weights_g])
     if args.num_gate:
         factors.constrain_num_gate(args.num_gate)

@@ -15,7 +15,7 @@
 """Fault tree classes and common facilities."""
 
 from collections import deque
-
+from math import comb
 import json
 
 class Event:
@@ -88,9 +88,6 @@ class BasicEvent(Event):
         """Produces the Aralia definition of the basic event."""
         printer('p(', self.name, ') = ', self.prob)
 
-    # with open("base-json.json", "r") as f:
-    #     base = json.load(f)
-
 
     def to_SAPHIRE_json_printer(self, printer):
 
@@ -107,6 +104,43 @@ class BasicEvent(Event):
         printer('"initf": "",')
         printer('"processf": "",')
         printer('"calctype": "1"')
+        if int(self.name.strip('B')) == self.num_basic:
+              printer('}')
+        else:
+              printer('},')
+
+
+    def to_SAPHIRE_json_object(self, base):
+
+        """Produces SaphSolver JSON definition of the basic event using json-python library"""
+
+        eventList = base['saphiresolveinput']['eventlist']
+        eventList[4]['id'] = int(self.name.strip('B'))
+        eventList[4]['corrgate'] = 0
+        eventList[4]['name'] = self.name
+        eventList[4]['evworkspacepair']['ph'] = 1
+        eventList[4]['evworkspacepair']['mt'] = 1
+        eventList[4]['value'] = self.prob
+        eventList[4]['initf'] = " "
+        eventList[4]['processf'] = " "
+        eventList[4]['calctype'] = "1"
+        dictCopy = eventList[4].copy()
+        eventList.append(dictCopy)
+
+
+    def to_OpenPRA_json_printer(self, printer):
+        """Produces OpenPRA JSON definition of the basic event."""
+        printer('"', self.name, '": {')
+        printer('"role": "public",')
+        printer('"label": {')
+        printer('"name": "Basic Event:', self.name, '",')
+        printer('"description": ""')
+        printer('},')
+        printer('"expression": {')
+        printer('"value": ', self.prob, ',')
+        printer('"_proxy": "Float"')
+        printer('},')
+        printer('"source_type": "hcl"')
         if int(self.name.strip('B')) == self.num_basic:
               printer('}')
         else:
@@ -207,9 +241,11 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
         self.b_arguments = set()
         self.h_arguments = set()
         self.u_arguments = set()
+        # self.members = ["B40", "B10"]
 
     def num_arguments(self):
         """Returns the number of arguments."""
+
         return sum(
             len(x) for x in (self.b_arguments, self.h_arguments,
                              self.g_arguments, self.u_arguments))
@@ -280,6 +316,15 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
             mef_xml += args_to_xml("house-event", gate.h_arguments)
             mef_xml += args_to_xml("basic-event", gate.b_arguments)
             mef_xml += args_to_xml("event", gate.u_arguments)
+            # print("self.members", self.members)
+            # if gate.b_arguments:
+            #     print("BE", gate.b_arguments)
+            #     # OpenPRA_JSON_format += "\"eventinput\": [\n"
+            #     for i in gate.b_arguments:
+            #         if i in self.members:
+            # # for member in self.members:
+            # #     if gate.b_arguments == "B59":
+            #             mef_xml += args_to_xml("basic-event", "CCF")
 
             def converter(arg_gate):
                 """Converter for single nesting NOT connective."""
@@ -397,8 +442,8 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
             # JSON_format = ""
             if gate.operator != "null":
                 gateList[1]['gatetype'] = gate.operator
-                if gate.operator == "atleast":
-                    gateList[0]['gatetype'] = str(gate.k_num)
+                if gate.operator == "k/n":
+                    gateList[1]['gatetype'] = str(gate.k_num)
 
             num_g = int(str(len(gate.g_arguments)))
             num_b = int(str(len(gate.b_arguments)))
@@ -438,7 +483,6 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
         gateList.append(dictCopy)
 
 
-
     def to_OpenPRA_JSON_printer(self, printer, last=True):
         """Produces the OpenPRA JSON definition of the gate.
 
@@ -471,7 +515,7 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
             OpenPRA_JSON_format = ""
             if gate.operator != "null":
                 OpenPRA_JSON_format += "\"name\":\"" + str.upper(gate.operator) + " Gate:" + self.name.strip('root') + "\",\n" + '"description":""\n },'
-                if gate.operator == "atleast":
+                if gate.operator == "k/n":
                     OpenPRA_JSON_format += " min=\"" + str(gate.k_num) + "\""
                 OpenPRA_JSON_format += "\n"
             num_g = int(str(len(gate.g_arguments)))
@@ -623,9 +667,13 @@ class CcfGroup:  # pylint: disable=too-few-public-methods
         printer('</distribution>')
 
         printer('<factors>')
-        assert self.model == "MGL"
+        # assert self.model == "MGL"
         assert self.factors
-        level = 2
+
+        if self.model == "MGL":
+            level = 2
+        else:
+            level = 1
         for factor in self.factors:
             printer('<factor level="', level, '">')
             printer('<float value="', factor, '"/>')
@@ -634,6 +682,67 @@ class CcfGroup:  # pylint: disable=too-few-public-methods
         printer('</factors>')
 
         printer('</define-CCF-group>')
+
+    def to_SAPHIRE_json_object(self, base):
+
+        """Produces SaphSolver JSON definition of common cause failures (alpha-factor model) using json-python library"""
+        for member in self.members:
+            if self.model == "alpha-factor":
+                eventList = base['saphiresolveinput']['eventlist']
+                eventList[4]['id'] = int(member.name.strip('B'))
+                eventList[4]['corrgate'] = 0
+                eventList[4]['name'] = member.name + "_cc"
+                eventList[4]['evworkspacepair']['ph'] = 1
+                eventList[4]['evworkspacepair']['mt'] = 1
+                eventList[4]['value'] = self.prob
+                eventList[4]['initf'] = " "
+                eventList[4]['processf'] = " "
+                eventList[4]['calctype'] = "1"
+                dictCopy = eventList[4].copy()
+                eventList.append(dictCopy)
+
+    def to_SAPHIRE_json_ccf_BE(self):
+     # """this function calculate the ccf basic event probability value for SAPHIRE json """
+        assert self.factors
+        Q_total = self.prob
+        m = len(self.factors)
+        k = range(m)
+        print(m,k)
+        # level = 1
+        ccf_values = []
+        # print (len(self.factors))
+        for factor in self.factors:
+            Q= self.prob
+
+            ccf_values.append(Q)
+        return ccf_values
+
+    def returned_ccf_list(self):
+
+        returned_ccf_values = CcfGroup.to_SAPHIRE_json_ccf_BE(self)
+
+        return returned_ccf_values
+
+
+    def to_SAPHIRE_json_ccf(self,base):
+        if not hasattr(self, "values"):
+            self.values = CcfGroup.to_SAPHIRE_json_ccf_BE(self)
+        # counter = 0
+        eventList = base['saphiresolveinput']['eventlist']
+        eventList[4]['id'] = int(self.name.strip("CCF") + "001")
+        eventList[4]['corrgate'] = 0
+        eventList[4]['name'] = self.name
+        eventList[4]['evworkspacepair']['ph'] = 1
+        eventList[4]['evworkspacepair']['mt'] = 1
+        eventList[4]['value'] = self.values.pop(0)
+        eventList[4]['initf'] = " "
+        eventList[4]['processf'] = " "
+        eventList[4]['calctype'] = "R"
+        dictCopy = eventList[4].copy()
+        eventList.append(dictCopy)
+        # counter +=1
+
+        # print("counter", counter)
 
 
 class FaultTree:  # pylint: disable=too-many-instance-attributes
@@ -665,6 +774,7 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
         self.house_events = []
         self.ccf_groups = []
         self.non_ccf_events = []  # must be assigned directly.
+        # self.factors = []
 
     def to_xml(self, printer, nest=False):
         """Produces the Open-PSA MEF XML definition of the fault tree.
@@ -690,9 +800,12 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
         printer('</define-fault-tree>')
 
         printer('<model-data>')
+
         for basic_event in (self.non_ccf_events
                             if self.ccf_groups else self.basic_events):
             basic_event.to_xml(printer)
+
+
 
         for house_event in self.house_events:
             house_event.to_xml(printer)
@@ -812,6 +925,53 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
         printer('}')
         printer('}')
 
+    def to_OpenPRA_json_printer(self, printer, nest=False):
+        """Produces SAPHIRE JSON definition of the fault tree.
+
+        The fault tree is produced breadth-first.
+        The output SAPHIRE JSON representation is not formatted for human readability.
+        The fault tree must be valid and well-formed.
+
+        Args:
+            printer: The output stream.
+            nest: A nesting factor for the Boolean formulae.
+        """
+        printer('"basic_events": {')
+        for basic_event in (self.non_ccf_events
+                            if self.ccf_groups else self.basic_events):
+            basic_event.to_OpenPRA_json_printer(printer)
+        printer('},')
+        printer('"house_events": {},')
+        printer('"gates": {')
+
+        sorted_gates = toposort_gates(self.top_gates or [self.top_gate],
+                                      self.gates)
+        for gate in sorted_gates:
+            gate.to_OpenPRA_JSON_printer(printer, nest)
+            if gate == sorted_gates[-1]:
+                printer("}")
+                printer("}")
+                printer("},")
+            else:
+                printer("}")
+                printer("},")
+        # printer('}')
+        printer('"components": {},')
+        printer('"top_node": {')
+        printer('"name": "80000",')
+        printer('"reference_type": "gates",')
+        printer('"tree_id": null,')
+        printer('"path": "",')
+        printer('"_proxy": "EventReference"')
+        printer('},')
+        printer('"name": "test2",')
+        printer('"model_tree_id": null,')
+        printer('"label": {')
+        printer('"name": "test2",')
+        printer('"description": ""')
+        printer('}')
+        printer('}')
+
     def to_SAPHIRE_json_object(self, base, nest=False):
         """Produces SAPHIRE JSON definition of the fault tree using the JSON python library.
 
@@ -834,16 +994,76 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
             gate.to_SAPHIRE_JSON_object(base, nest)
 
 
+        # for basic_event in (self.non_ccf_events
+        #                     if self.ccf_groups else self.basic_events):
+        #     basic_event.to_SAPHIRE_json_object(base)
+
         for basic_event in (self.non_ccf_events
                             if self.ccf_groups else self.basic_events):
             basic_event.to_SAPHIRE_json_object(base)
+
+        for ccf_group in self.ccf_groups:
+            ccf_group.to_SAPHIRE_json_object(base)
+            ccf_group.to_SAPHIRE_json_ccf(base)
+        #     # print("CCF",self.name)
+
         eventList = base['saphiresolveinput']['eventlist']
-        with open("SAPHSOLVE_INPUT.json", "w") as f:
+        with open("SAPHSOLVE_INPUT.JSInp", "w") as f:
             del gateList[1]
             del gateList[0]
             del eventList[4]
             json.dump(base, f, indent=4)
 
+        with open("SAPHSOLVE_INPUT.JSInp", 'r') as f:
+                base = json.load(f)
+        def check_and_add_number(obj, num, add_num):
+            if isinstance(obj, dict):
+                for key, value in obj.items():
+                    if key == 'eventinput' and num in value:
+                        value.append(add_num)
+                        obj['numinputs'] += 1
+                    else:
+                        check_and_add_number(value, num, add_num)
+            elif isinstance(obj, list):
+                for item in obj:
+                    check_and_add_number(item, num, add_num)
+
+
+        # instance = CcfGroup()
+        # ccf_instance = ccf_instance.to_SAPHIRE_json_ccf(base)
+        member_list =[]
+        counter = []
+        i = 1
+        for ccf_group in self.ccf_groups:
+
+            # ccf_group.to_SAPHIRE_json_object(base)
+            # ccf_group.to_SAPHIRE_json_ccf(base)
+
+            # first_group = self.ccf_groups[0]
+            for member in ccf_group.members:
+            # for member in first_group.members:
+                print(member.name)
+                check_and_add_number(base, int(member.name.strip("B")), int(ccf_group.name.strip("\"CCF") + "001"))
+            # first_group = self.ccf_groups[]
+            # for member in ccf_group.members[0]:
+            #     print(member.name)
+            # for ccf_g in ccf_group:
+            #     print (ccf_g, member.name)
+            # counter.append(i)
+            # # i +=1
+            # for i in ccf_group.name:
+            #     print(i)
+        # print("members", ccf_group.members.name)
+        # print("counter", counter)
+                # member_list=[member.name]
+                # print(f"Index {member}: {ccf_g.name}")
+                # print(member_list)
+        # for i in counter:
+        #     # check_and_add_number(base, member_list, int(ccf_group.name.strip("\"CCF") + "00000"))
+        #     check_and_add_number(base, member_list, i + int("00000"))
+
+        with open("SAPHSOLVE_INPUT.JSInp", 'w') as f:
+            json.dump(base, f, indent = 4)
 
     def to_OpenPRA_json_printer(self, printer, nest=False):
         """Produces SAPHIRE JSON definition of the fault tree.
@@ -891,6 +1111,9 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
         printer('"description": ""')
         printer('}')
         printer('}')
+
+
+
 
 
 
