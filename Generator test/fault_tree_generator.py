@@ -1157,7 +1157,7 @@ def manage_cmd_args(argv=None):
                         nargs="+",
                         metavar="float",
                         help="weights for [AND, OR, K/N, NOT, XOR] gates",
-                        default=[1, 3, 0, 0, 0])
+                        default=[1, 1, 1, 0, 0])
     parser.add_argument("--common-b",
                         type=float,
                         default=0.1,
@@ -1202,7 +1202,7 @@ def manage_cmd_args(argv=None):
     parser.add_argument("--num-ccf",
                         type=int,
                         help="# of ccf groups",
-                        default=2,
+                        default=0,
                         metavar="int")
     parser.add_argument("--ccf-size",
                         type=int,
