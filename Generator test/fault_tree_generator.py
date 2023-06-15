@@ -1017,6 +1017,8 @@ def get_size_summary(fault_tree, printer):
     printer('The number of basic events: ', len(fault_tree.basic_events))
     printer('The number of house events: ', len(fault_tree.house_events))
     printer('The number of CCF groups: ', len(fault_tree.ccf_groups))
+    printer('maximum CCF size: ', fault_tree.factors.ccf_size)
+    printer('CCF model: ', fault_tree.factors.ccf_model)
     printer('The number of gates: ', len(fault_tree.gates))
     printer('    AND gates: ', gate_count['and'])
     printer('    OR gates: ', gate_count['or'])
