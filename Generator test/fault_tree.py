@@ -17,7 +17,8 @@
 from collections import deque
 from math import comb
 import json
-
+from fractions import Fraction
+from decimal import Decimal
 class Event:
     """Representation of a base class for an event in a fault tree.
 
@@ -439,17 +440,19 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
             """Converts the formula of a gate into SAPHIRE JSON representation."""
             gateList = base['saphiresolveinput']['faulttreelist'][0]['gatelist']
 
+
+            num_g = len(gate.g_arguments)
+            num_b = len(gate.b_arguments)
+            total_num = num_g + num_b
+            print(total_num)
             # JSON_format = ""
             if gate.operator != "null":
                 gateList[1]['gatetype'] = gate.operator
-                if gate.operator == "k/n":
-                    gateList[1]['gatetype'] = str(gate.k_num)
+                if gate.operator == "atleast":
+                    fraction_value = f"{gate.k_num}/{total_num}"
+                    gateList[1]['gatetype'] = fraction_value
 
-            num_g = int(str(len(gate.g_arguments)))
-            num_b = int(str(len(gate.b_arguments)))
-            total_num = num_g + num_b
-
-            gateList[1]['numinputs'] = int(str(total_num))
+            gateList[1]['numinputs'] = total_num
             gate_list = list()
             if gate.g_arguments:
 
