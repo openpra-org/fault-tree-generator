@@ -444,7 +444,7 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
             num_g = len(gate.g_arguments)
             num_b = len(gate.b_arguments)
             total_num = num_g + num_b
-            print(total_num)
+            # print(total_num)
             # JSON_format = ""
             if gate.operator != "null":
                 gateList[1]['gatetype'] = gate.operator
@@ -710,7 +710,7 @@ class CcfGroup:  # pylint: disable=too-few-public-methods
         Q_total = self.prob
         m = len(self.factors)
         k = range(m)
-        print(m,k)
+        # print(m,k)
         # level = 1
         ccf_values = []
         # print (len(self.factors))
@@ -1045,7 +1045,7 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
             # first_group = self.ccf_groups[0]
             for member in ccf_group.members:
             # for member in first_group.members:
-                print(member.name)
+            #     print(member.name)
                 check_and_add_number(base, int(member.name.strip("B")), int(ccf_group.name.strip("\"CCF") + "001"))
             # first_group = self.ccf_groups[]
             # for member in ccf_group.members[0]:
@@ -1067,6 +1067,12 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
 
         with open("SAPHSOLVE_INPUT.JSInp", 'w') as f:
             json.dump(base, f, indent = 4)
+
+        with open("SAPHSOLVE_INPUT.JSInp", 'r') as f:
+            contents = f.read()
+            print(contents)
+
+
 
     def to_OpenPRA_json_printer(self, printer, nest=False):
         """Produces SAPHIRE JSON definition of the fault tree.
