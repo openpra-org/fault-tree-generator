@@ -28,7 +28,11 @@ def to_enum(c: Type[EnumT], x: Any) -> EnumT:
 def from_list(f: Callable[[Any], T], x: Any) -> List[T]:
     assert isinstance(x, list)
     return [f(y) for y in x]
-
+def from_list(f: Callable[[Any], T], x: Any) -> List[T]:
+    if isinstance(x, list):
+        return [f(y) for y in x]
+    else:
+        return [f(x)]
 
 def from_none(x: Any) -> Any:
     assert x is None
@@ -85,7 +89,6 @@ class Initf(Enum):
     EMPTY = " "
     I = "I"
 
-
 class Eventlist:
     id: int
     corrgate: int
@@ -131,11 +134,6 @@ class Eventlist:
         result["calctype"] = from_str(self.calctype)
         return result
 
-# ev_workspace_pair = Workspacepair(1, 1)
-# ev_workspace_pair_dict = {"Workspacepair": ev_workspace_pair.to_dict()}
-# formatted_output = json.dumps(ev_workspace_pair_dict, indent=2)
-# # event = Eventlist.to_dict(1, 0, "Event 1", ev_workspace_pair, 10, Initf.I, Initf.EMPTY, "1")
-# print(formatted_output)
 class Ftheader:
     ftid: int
     gtid: int
@@ -169,10 +167,6 @@ class Ftheader:
         result["numgates"] = from_int(self.numgates)
         return result
 
-# ft_header = Ftheader(2, 3, 12, 0, 2)
-# ft_header_dict = {"ftheader": ft_header.to_dict()}
-# formatted_output = json.dumps(ft_header_dict, indent=2)
-# print(formatted_output)
 class Gatelist:
     gateid: int
     gatetype: str
@@ -206,12 +200,6 @@ class Gatelist:
             result["gateinput"] = from_union([lambda x: from_list(from_int, x), from_none], self.gateinput)
         result["eventinput"] = from_list(from_int, self.eventinput)
         return result
-#
-# ft_header = Ftheader(2, 3, 12, 0, 2)
-# ft_header_dict = {"ftheader": ft_header.to_dict()}
-# formatted_output = json.dumps(ft_header_dict, indent=2)
-# print(formatted_output)
-
 class Faulttreelist:
     ftheader: Ftheader
     gatelist: List[Gatelist]
@@ -232,83 +220,6 @@ class Faulttreelist:
         result["ftheader"] = to_class(Ftheader, self.ftheader)
         result["gatelist"] = from_list(lambda x: to_class(Gatelist, x), self.gatelist)
         return result
-
-# ft_header = Ftheader(2, 3, 12, 0, 2)
-# gate1 = Gatelist(1, "or", 2, None, [5])
-# gate2 = Gatelist(2, "and", 2, None, [6, 7])
-# gate3 = Gatelist(3, "or", 2, None, [4])
-# gate4 = Gatelist(4, "and", 2, None, [9, 10, 11])
-# gatelist1 = [gate1, gate2]
-# gatelist2 = [gate3, gate4]
-#
-# fault_tree1 = Faulttreelist(ft_header, gatelist1)
-# fault_tree2 = Faulttreelist(ft_header, gatelist2)
-#
-# fault_tree1_dict = fault_tree1.to_dict()
-# fault_tree2_dict = fault_tree2.to_dict()
-# # fault_tree_list = ["faulttreelist": fault_tree1_dict(), fault_tree2_dict()]
-# # # fault_tree_list = [{"faulttreelist": fault_tree1_dict}, {"faulttreelist": fault_tree2_dict}]
-# # fault_tree_list = "faulttreelist": [
-# #     {
-# #         "ftheader": fault_tree1.ftheader.to_dict(),
-# #         "gatelist": [gate.to_dict() for gate in fault_tree1.gatelist]
-# #     },
-# #     {
-# #         "ftheader": fault_tree2.ftheader.to_dict(),
-# #         "gatelist": [gate.to_dict() for gate in fault_tree2.gatelist]
-# #     }
-# # ]
-# #
-# # fault_tree_list = {
-# #     "ftheader": fault_tree1.ftheader.to_dict(),
-# #     "gatelist": [gate.to_dict() for gate in fault_tree1.gatelist]
-# # }
-# #
-# # json_output = json.dumps({"faulttreelist": fault_tree_list}, indent=4)
-# # print(json_output)
-#
-#
-# fault_tree_list = [
-#     {
-#         "ftheader": fault_tree1.ftheader.to_dict(),
-#         "gatelist": [gate.to_dict() for gate in fault_tree1.gatelist]
-#     },
-#     {
-#         "ftheader": fault_tree2.ftheader.to_dict(),
-#         "gatelist": [gate.to_dict() for gate in fault_tree2.gatelist]
-#     }
-# ]
-#
-# output_dict = {
-#     "faulttreelist": fault_tree_list
-# }
-# json_output = json.dumps({output_dict , indent=4)
-# print(json_output)
-
-# Create Ftheader instances
-ftheader1 = Ftheader(1, 1, 8, 0, 2)
-ftheader2 = Ftheader(2, 3, 12, 0, 2)
-
-# Create Gatelist instances
-gatelist1 = [
-    Gatelist(1, "or", 2, [2], [5]),
-    Gatelist(2, "and", 2, None, [6, 7])
-]
-gatelist2 = [
-    Gatelist(3, "or", 2, [4], [9]),
-    Gatelist(4, "and", 2, None, [10, 11])
-]
-
-# Create Faulttreelist instance
-faulttreelist = [
-    Faulttreelist(ftheader1, gatelist1),
-    Faulttreelist(ftheader2, gatelist2)
-]
-
-
-json_data = json.dumps([item.to_dict() for item in faulttreelist], indent=4)
-print("\"faulttreelist\":", json_data)
-
 
 class Eventtree:
     name: str
@@ -338,7 +249,6 @@ class Eventtree:
         result["initevent"] = from_int(self.initevent)
         result["seqphase"] = from_int(self.seqphase)
         return result
-
 
 class Truncparam:
     ettruncopt: str
@@ -396,7 +306,6 @@ class Truncparam:
         result["usedual"] = from_bool(self.usedual)
         result["dualcutoff"] = from_int(self.dualcutoff)
         return result
-
 
 class Header:
     projectpath: str
@@ -466,24 +375,6 @@ class Header:
         result["workspacepair"] = to_class(Workspacepair, self.workspacepair)
         result["iworkspacepair"] = to_class(Workspacepair, self.iworkspacepair)
         return result
-
-# Create instances of Eventtree, Workspacepair, and Truncparam
-event_tree = Eventtree("Sample Event Tree", 1, 8, 0)
-workspace_pair = Workspacepair(1, 2)
-trunc_param = Truncparam("ettruncopt", "fttruncopt", "sizeopt", 0.5, 0.7, 10, True, False, 3, True, 5)
-
-# Combine the instances into a dictionary
-data = {
-    "event_tree": event_tree.to_dict(),
-    "workspace_pair": workspace_pair.to_dict(),
-    "trunc_param": trunc_param.to_dict()
-}
-
-# Convert the dictionary to a JSON-formatted string
-
-
-json_data = json.dumps(data, indent=4)
-print(json_data)
 
 class Sequencelist:
     seqid: int
@@ -660,3 +551,36 @@ def welcome_from_dict(s: Any) -> Welcome:
 def welcome_to_dict(x: Welcome) -> Any:
     return to_class(Welcome, x)
 
+
+from typing import Any, List
+
+# Import the required classes from the previous code
+# ...
+
+# Create instances of the dependent classes
+workspacepair = Workspacepair(ph=1, mt=2)
+eventlist = Eventlist(id=1, corrgate=2, name="Event", evworkspacepair=workspacepair, value=3, initf=Initf.I, processf=Initf.EMPTY, calctype="Calculation")
+ftheader = Ftheader(ftid=1, gtid=2, evid=3, defflag=4, numgates=5)
+gatelist = Gatelist(gateid=1, gatetype="AND", numinputs=2, gateinput=[1, 2], eventinput=[3, 4])
+faulttreelist = Faulttreelist(ftheader=ftheader, gatelist=[gatelist])
+eventtree = Eventtree(name="Tree", number=1, initevent=2, seqphase=3)
+trunc_param = Truncparam("ettruncopt", "fttruncopt", "sizeopt", 0.5, 0.7, 10, True, False, 3, True, 5)
+# Create an instance of Saphiresolveinput
+header = Header(projectpath="path/to/project", eventtree=eventtree, flagnum=1, ftcount=2, fthigh=3, sqcount=4, sqhigh=5, becount=6, behigh=7, mthigh=8, phhigh=9, truncparam=trunc_param, workspacepair=workspacepair, iworkspacepair=workspacepair)
+sysgatelist = [Sysgatelist(name="Gate1", id=1, gateid=2, gateorig=3, gatepos=4, eventid=5, gatecomp=6, comppos=7, compflag=Initf.I, gateflag=Initf.EMPTY, gatet=Initf.EMPTY, bddsuccess=True, done=False)]
+sequencelist = [Sequencelist(seqid=1, etid=2, initid=3, qmethod="Method", qpasses=4, numlogic=5, blocksize=6, logiclist=[1, 2, 3])]
+eventlist = [eventlist]
+# welcome = Welcome("1.0.0", "cool")
+
+
+# Convert the Welcome instance to a dictionary
+
+saphiresolveinput = Saphiresolveinput(header=header, sysgatelist=sysgatelist, faulttreelist=faulttreelist, sequencelist=sequencelist, eventlist=eventlist)
+welcome = Welcome(version="1.0.0", saphiresolveinput=saphiresolveinput)
+
+# Convert the instance to a dictionary
+welcome_dict = welcome.to_dict()
+
+# Convert the dictionary to JSON string
+json_string = json.dumps(welcome_dict, indent=4)
+print(json_string)
