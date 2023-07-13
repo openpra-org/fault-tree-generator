@@ -5,13 +5,12 @@ import json
 from enum import Enum
 from typing import Any, List, Optional
 from typing import Any, List
-import sys
+import json
+
 
 
 T = TypeVar("T")
 EnumT = TypeVar("EnumT", bound=Enum)
-
-
 def from_int(x: Any) -> int:
     # assert isinstance(x, int) and not isinstance(x, bool)
     return x
@@ -30,8 +29,6 @@ def to_enum(c: Type[EnumT], x: Any) -> Optional[EnumT]:
         return x.value
     else:
         return None
-
-
 def from_list(f: Callable[[Any], T], x: Any) -> List[T]:
     assert isinstance(x, list)
     return [f(y) for y in x]
@@ -45,7 +42,6 @@ def from_none(x: Any) -> Any:
     assert x is None
     return x
 
-
 def from_union(fs, x):
     for f in fs:
         try:
@@ -54,21 +50,15 @@ def from_union(fs, x):
             pass
     assert False
 
-
 def from_float(x: Any) -> float:
     assert isinstance(x, (float, int)) and not isinstance(x, bool)
     return float(x)
-
-
 def from_bool(x: Any) -> bool:
     assert isinstance(x, bool)
     return x
-
-
 def to_float(x: Any) -> float:
     assert isinstance(x, float)
     return x
-
 
 class Workspacepair:
     ph: int
@@ -256,7 +246,6 @@ class Eventtree:
         result["initevent"] = from_int(self.initevent)
         result["seqphase"] = from_int(self.seqphase)
         return result
-
 class Truncparam:
     ettruncopt: str
     fttruncopt: str
@@ -313,7 +302,6 @@ class Truncparam:
         result["usedual"] = from_bool(self.usedual)
         result["dualcutoff"] = from_int(self.dualcutoff)
         return result
-
 class Header:
     projectpath: str
     eventtree: Eventtree
@@ -382,7 +370,6 @@ class Header:
         result["workspacepair"] = to_class(Workspacepair, self.workspacepair)
         result["iworkspacepair"] = to_class(Workspacepair, self.iworkspacepair)
         return result
-
 class Sequencelist:
     seqid: int
     etid: int
@@ -427,8 +414,6 @@ class Sequencelist:
         result["blocksize"] = from_int(self.blocksize)
         result["logiclist"] = from_list(from_int, self.logiclist)
         return result
-
-
 class Sysgatelist:
     name: str
     id: int
@@ -493,8 +478,6 @@ class Sysgatelist:
         result["bddsuccess"] = from_bool(self.bddsuccess)
         result["done"] = from_bool(self.done)
         return result
-
-
 class Saphiresolveinput:
     header: Header
     sysgatelist: List[Sysgatelist]
@@ -527,8 +510,6 @@ class Saphiresolveinput:
         result["sequencelist"] = from_list(lambda x: to_class(Sequencelist, x), self.sequencelist)
         result["eventlist"] = from_list(lambda x: to_class(Eventlist, x), self.eventlist)
         return result
-
-
 class Welcome:
     version: str
     saphiresolveinput: Saphiresolveinput
@@ -549,22 +530,10 @@ class Welcome:
         result["version"] = from_str(self.version)
         result["saphiresolveinput"] = to_class(Saphiresolveinput, self.saphiresolveinput)
         return result
-
-
 def welcome_from_dict(s: Any) -> Welcome:
     return Welcome.from_dict(s)
-
-
 def welcome_to_dict(x: Welcome) -> Any:
     return to_class(Welcome, x)
-
-
-# ...
-
-
-
-from typing import Any, List
-import json
 
 # ...
 ft_count = 4
@@ -577,6 +546,19 @@ be_distribution = be_count // ft_count
 
 # Step 3: Generate synthetic event tree structure
 fault_tree_list = []
+event_list = []
+workspacepair = Workspacepair(ph=1, mt=1)
+# initalizing basic events
+eventlist_1 = Eventlist(id=ft_count+be_count+103, corrgate=0, name="<TRUE>", evworkspacepair=workspacepair, value=1, initf=Initf.EMPTY, processf=Initf.EMPTY, calctype="1")
+eventlist_2 = Eventlist(id=ft_count+be_count+102, corrgate=0, name="<FALSE>", evworkspacepair=workspacepair, value=0, initf=Initf.EMPTY, processf=Initf.EMPTY, calctype="1")
+eventlist_3 = Eventlist(id=ft_count+be_count+101, corrgate=0, name="<PASS>", evworkspacepair=workspacepair, value=1, initf=Initf.EMPTY, processf=Initf.EMPTY, calctype="1")
+eventlist_4 = Eventlist(id=ft_count+be_count+100, corrgate=0, name="INIT-EV", evworkspacepair=workspacepair, value=1, initf=Initf.I, processf=Initf.EMPTY, calctype="N")
+event_list.append(eventlist_1)
+event_list.append(eventlist_2)
+event_list.append(eventlist_3)
+event_list.append(eventlist_4)
+
+#FT header for each fault tree
 for ft_id in range(1, ft_count + 1):
     ftheader = Ftheader(
         ftid=ft_id,
@@ -585,11 +567,23 @@ for ft_id in range(1, ft_count + 1):
         defflag=0,
         numgates=gate_distribution
     )
+
+    event = Eventlist(
+        id=ft_id,
+        corrgate=(ft_id % gate_count) + 1,
+        name=f"FT-{ft_id}",
+        evworkspacepair=Workspacepair(ph=1, mt=1),
+        value=1.00000E+00,
+        initf=Initf.EMPTY,
+        processf=Initf.EMPTY,
+        calctype='1'
+    )
+    event_list.append(event)
     gatelist = []
     for gate_id in range(1, gate_distribution + 1):
         gate = Gatelist(
             gateid=gate_id,
-            gatetype=random.choice(["AND", "OR"]) ,
+            gatetype=random.choice(["AND", "OR"]),
             numinputs=4,
             gateinput=[2 * gate_id - 1, 2 * gate_id],
             eventinput=[2 * gate_id - 1, 2 * gate_id]
@@ -599,44 +593,31 @@ for ft_id in range(1, ft_count + 1):
     fault_tree = Faulttreelist(ftheader=ftheader, gatelist=gatelist)
     fault_tree_list.append(fault_tree)
 
-# Step 4: Generate event list
-event_list = []
-workspacepair = Workspacepair(ph=1, mt=1)
-eventlist_1 = Eventlist(id=99999, corrgate=2, name="<TRUE>", evworkspacepair=workspacepair, value=1, initf=Initf.I, processf=Initf.EMPTY, calctype="1")
-eventlist_2 = Eventlist(id=99998, corrgate=2, name="<FALSE>", evworkspacepair=workspacepair, value=0, initf=Initf.I, processf=Initf.EMPTY, calctype="1")
-eventlist_3 = Eventlist(id=99997, corrgate=2, name="<PASS>", evworkspacepair=workspacepair, value=1, initf=Initf.I, processf=Initf.EMPTY, calctype="1")
-eventlist_4 = Eventlist(id=99996, corrgate=2, name="INIT-EV", evworkspacepair=workspacepair, value=1, initf=Initf.I, processf=Initf.EMPTY, calctype="N")
-event_list.append(eventlist_1)
-event_list.append(eventlist_2)
-event_list.append(eventlist_3)
+# Generate unique IDs for basic events and add them to event_list
 for event_id in range(1, be_count + 1):
+    unique_id = ft_count + event_id
     event = Eventlist(
-        id=event_id,
+        id=unique_id,
         corrgate=(event_id % gate_count) + 1,
-        name=f"FT-{event_id}",
+        name=f"BE-{event_id}",
         evworkspacepair=Workspacepair(ph=1, mt=1),
-        value=1.00000E+00,
-        initf=' ',
-        processf=' ',
+        value=random.uniform(0, 1),
+        initf=Initf.EMPTY,
+        processf=Initf.EMPTY,
         calctype='1'
     )
     event_list.append(event)
 
 
-
-# eventlist =
 ftheader = Ftheader(ftid=1, gtid=2, evid=3, defflag=4, numgates=5)
-gatelist = Gatelist(gateid=1, gatetype="AND", numinputs=2, gateinput=[1, 2], eventinput=[3, 4])
+# gatelist = Gatelist(gateid=1, gatetype="AND", numinputs=2, gateinput=[1, 2], eventinput=[3, 4])
 # faulttreelist = Faulttreelist(ftheader=ftheader, gatelist=[gatelist])
-eventtree = Eventtree(name="Tree", number=1, initevent=99996, seqphase=3)
-trunc_param = Truncparam("ettruncopt", "fttruncopt", "sizeopt", 0.5, 0.7, 10, True, False, 3, True, 5)
+eventtree = Eventtree(name="Tree", number=1, initevent=ft_count+be_count+100, seqphase=1)
+trunc_param = Truncparam("NormalProbCutOff", "GlobalProbCutOff", "ENoTrunc", 1.0e-14, 1.0e-14, 99, False, False, 0, False, 0.0)
 # Create an instance of Saphiresolveinput
-header = Header(projectpath="path/to/project", eventtree=eventtree, flagnum=1, ftcount=2, fthigh=3, sqcount=4, sqhigh=5, becount=6, behigh=7, mthigh=8, phhigh=9, truncparam=trunc_param, workspacepair=workspacepair, iworkspacepair=workspacepair)
+header = Header(projectpath="path/to/project", eventtree=eventtree, flagnum=0, ftcount=ft_count, fthigh=ft_count, sqcount=4, sqhigh=5, becount=4+ft_count+be_count, behigh=ft_count+be_count+103, mthigh=1, phhigh=1, truncparam=trunc_param, workspacepair=workspacepair, iworkspacepair=workspacepair)
 sysgatelist = [Sysgatelist(name="Gate1", id=1, gateid=2, gateorig=3, gatepos=4, eventid=5, gatecomp=6, comppos=7, compflag=Initf.I, gateflag=Initf.EMPTY, gatet=Initf.EMPTY, bddsuccess=True, done=False)]
-sequencelist = [Sequencelist(seqid=1, etid=2, initid=3, qmethod="Method", qpasses=4, numlogic=5, blocksize=6, logiclist=[1, 2, 3])]
-# eventlist = [eventlist]
-# welcome = Welcome("1.0.0", "cool")
-
+sequencelist = [Sequencelist(seqid=1, etid=2, initid=3, qmethod="M", qpasses=4, numlogic=5, blocksize=6, logiclist=[1, 2, 3])]
 
 # Convert the Welcome instance to a dictionary
 
