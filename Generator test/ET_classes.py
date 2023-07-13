@@ -1,16 +1,19 @@
 from typing import Any, List, Optional, TypeVar, Type, cast, Callable
-from enum import Enum
+from typing import Any, List
+import random
 import json
-from dataclasses import dataclass
 from enum import Enum
 from typing import Any, List, Optional
+from typing import Any, List
+import sys
+
 
 T = TypeVar("T")
 EnumT = TypeVar("EnumT", bound=Enum)
 
 
 def from_int(x: Any) -> int:
-    assert isinstance(x, int) and not isinstance(x, bool)
+    # assert isinstance(x, int) and not isinstance(x, bool)
     return x
 
 def from_str(x: Any) -> str:
@@ -18,12 +21,16 @@ def from_str(x: Any) -> str:
     return x
 
 def to_class(c: Type[T], x: Any) -> dict:
-    assert isinstance(x, c)
+    if isinstance(x, list):
+        return [to_class(c, item) for item in x]
     return cast(Any, x).to_dict()
 
-def to_enum(c: Type[EnumT], x: Any) -> EnumT:
-    assert isinstance(x, c)
-    return x.value
+def to_enum(c: Type[EnumT], x: Any) -> Optional[EnumT]:
+    if isinstance(x, c):
+        return x.value
+    else:
+        return None
+
 
 def from_list(f: Callable[[Any], T], x: Any) -> List[T]:
     assert isinstance(x, list)
@@ -552,35 +559,92 @@ def welcome_to_dict(x: Welcome) -> Any:
     return to_class(Welcome, x)
 
 
-from typing import Any, List
-
-# Import the required classes from the previous code
 # ...
 
-# Create instances of the dependent classes
-workspacepair = Workspacepair(ph=1, mt=2)
-eventlist = Eventlist(id=1, corrgate=2, name="Event", evworkspacepair=workspacepair, value=3, initf=Initf.I, processf=Initf.EMPTY, calctype="Calculation")
+
+
+from typing import Any, List
+import json
+
+# ...
+ft_count = 4
+be_count = 12
+gate_count = 4
+
+# Step 2: Determine gate and basic event distribution
+gate_distribution = gate_count // ft_count
+be_distribution = be_count // ft_count
+
+# Step 3: Generate synthetic event tree structure
+fault_tree_list = []
+for ft_id in range(1, ft_count + 1):
+    ftheader = Ftheader(
+        ftid=ft_id,
+        gtid=ft_id,
+        evid=ft_id,
+        defflag=0,
+        numgates=gate_distribution
+    )
+    gatelist = []
+    for gate_id in range(1, gate_distribution + 1):
+        gate = Gatelist(
+            gateid=gate_id,
+            gatetype=random.choice(["AND", "OR"]) ,
+            numinputs=4,
+            gateinput=[2 * gate_id - 1, 2 * gate_id],
+            eventinput=[2 * gate_id - 1, 2 * gate_id]
+        )
+        gatelist.append(gate)
+
+    fault_tree = Faulttreelist(ftheader=ftheader, gatelist=gatelist)
+    fault_tree_list.append(fault_tree)
+
+# Step 4: Generate event list
+event_list = []
+workspacepair = Workspacepair(ph=1, mt=1)
+eventlist_1 = Eventlist(id=99999, corrgate=2, name="<TRUE>", evworkspacepair=workspacepair, value=1, initf=Initf.I, processf=Initf.EMPTY, calctype="1")
+eventlist_2 = Eventlist(id=99998, corrgate=2, name="<FALSE>", evworkspacepair=workspacepair, value=0, initf=Initf.I, processf=Initf.EMPTY, calctype="1")
+eventlist_3 = Eventlist(id=99997, corrgate=2, name="<PASS>", evworkspacepair=workspacepair, value=1, initf=Initf.I, processf=Initf.EMPTY, calctype="1")
+eventlist_4 = Eventlist(id=99996, corrgate=2, name="INIT-EV", evworkspacepair=workspacepair, value=1, initf=Initf.I, processf=Initf.EMPTY, calctype="N")
+event_list.append(eventlist_1)
+event_list.append(eventlist_2)
+event_list.append(eventlist_3)
+for event_id in range(1, be_count + 1):
+    event = Eventlist(
+        id=event_id,
+        corrgate=(event_id % gate_count) + 1,
+        name=f"FT-{event_id}",
+        evworkspacepair=Workspacepair(ph=1, mt=1),
+        value=1.00000E+00,
+        initf=' ',
+        processf=' ',
+        calctype='1'
+    )
+    event_list.append(event)
+
+
+
+# eventlist =
 ftheader = Ftheader(ftid=1, gtid=2, evid=3, defflag=4, numgates=5)
 gatelist = Gatelist(gateid=1, gatetype="AND", numinputs=2, gateinput=[1, 2], eventinput=[3, 4])
-faulttreelist = Faulttreelist(ftheader=ftheader, gatelist=[gatelist])
-eventtree = Eventtree(name="Tree", number=1, initevent=2, seqphase=3)
+# faulttreelist = Faulttreelist(ftheader=ftheader, gatelist=[gatelist])
+eventtree = Eventtree(name="Tree", number=1, initevent=99996, seqphase=3)
 trunc_param = Truncparam("ettruncopt", "fttruncopt", "sizeopt", 0.5, 0.7, 10, True, False, 3, True, 5)
 # Create an instance of Saphiresolveinput
 header = Header(projectpath="path/to/project", eventtree=eventtree, flagnum=1, ftcount=2, fthigh=3, sqcount=4, sqhigh=5, becount=6, behigh=7, mthigh=8, phhigh=9, truncparam=trunc_param, workspacepair=workspacepair, iworkspacepair=workspacepair)
 sysgatelist = [Sysgatelist(name="Gate1", id=1, gateid=2, gateorig=3, gatepos=4, eventid=5, gatecomp=6, comppos=7, compflag=Initf.I, gateflag=Initf.EMPTY, gatet=Initf.EMPTY, bddsuccess=True, done=False)]
 sequencelist = [Sequencelist(seqid=1, etid=2, initid=3, qmethod="Method", qpasses=4, numlogic=5, blocksize=6, logiclist=[1, 2, 3])]
-eventlist = [eventlist]
+# eventlist = [eventlist]
 # welcome = Welcome("1.0.0", "cool")
 
 
 # Convert the Welcome instance to a dictionary
 
-saphiresolveinput = Saphiresolveinput(header=header, sysgatelist=sysgatelist, faulttreelist=faulttreelist, sequencelist=sequencelist, eventlist=eventlist)
+saphiresolveinput = Saphiresolveinput(header=header, sysgatelist=sysgatelist, faulttreelist=fault_tree_list, sequencelist=sequencelist, eventlist=event_list)
 welcome = Welcome(version="1.0.0", saphiresolveinput=saphiresolveinput)
 
 # Convert the instance to a dictionary
 welcome_dict = welcome.to_dict()
-
-# Convert the dictionary to JSON string
 json_string = json.dumps(welcome_dict, indent=4)
+
 print(json_string)
