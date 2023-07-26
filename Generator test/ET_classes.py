@@ -1,7 +1,5 @@
 from typing import Any, List, Optional, TypeVar, Type, cast, Callable
-from typing import Any, List
 import random
-import json
 from enum import Enum
 from typing import Any, List, Optional
 from typing import Any, List
@@ -175,8 +173,8 @@ class Gatelist:
         self.gateid = gateid
         self.gatetype = gatetype
         self.numinputs = numinputs
-        self.gateinput = gateinput
-        self.eventinput = eventinput
+        self.gateinput = gateinput if gateinput is not None else []
+        self.eventinput = eventinput if eventinput is not None else []
 
     @staticmethod
     def from_dict(obj: Any) -> 'Gatelist':
@@ -536,12 +534,12 @@ def welcome_to_dict(x: Welcome) -> Any:
     return to_class(Welcome, x)
 
 # ...
-ft_count = 4
-be_count = 12
-gate_count = 4
+ft_count = 2
+be_count = 4
+gate_count = 3
 
 # Step 2: Determine gate and basic event distribution
-gate_distribution = gate_count // ft_count
+gate_distribution = (gate_count - ft_count) // (ft_count - 1)
 be_distribution = be_count // ft_count
 
 # Step 3: Generate synthetic event tree structure
@@ -558,14 +556,22 @@ event_list.append(eventlist_2)
 event_list.append(eventlist_3)
 event_list.append(eventlist_4)
 
+be_used = []    # Keep track of basic events used in the fault tree
 #FT header for each fault tree
 for ft_id in range(1, ft_count + 1):
+    gatelist = []
+
+    num_gates_in_ft = gate_distribution + (1 if ft_id == ft_count else 0)
+
+    # Available gate and event input IDs for this fault tree
+    gate_input_ids = list(range(1, ft_count + 1))
+    event_input_ids = list(range(ft_count + 1, ft_count + be_count + 1))
     ftheader = Ftheader(
         ftid=ft_id,
-        gtid=ft_id,
+        gtid=top_gate_id,
         evid=ft_id,
         defflag=0,
-        numgates=gate_distribution
+        numgates=num_gates_in_ft
     )
 
     event = Eventlist(
@@ -579,19 +585,47 @@ for ft_id in range(1, ft_count + 1):
         calctype='1'
     )
     event_list.append(event)
-    gatelist = []
-    for gate_id in range(1, gate_distribution + 1):
+    for gate_id in range(1, num_gates_in_ft + 1):
+        num_inputs = random.randint(2, be_count + 1)
+        num_inputs = min(num_inputs, len(gate_input_ids) + len(event_input_ids))  # Ensure not to exceed total inputs
+
+        # Randomly select unique IDs from the available pool of gate and event IDs
+        selected_input_ids = random.sample(gate_input_ids + event_input_ids, num_inputs)
+
+        # Separate gate and event input IDs based on the selected IDs
+        gate_input_ids = [input_id for input_id in selected_input_ids if input_id <= ft_count]
+        event_input_ids = [input_id for input_id in selected_input_ids if input_id > ft_count]
+
+        # Update the list of used basic events
+        be_used.extend(event_input_ids)
+
         gate = Gatelist(
             gateid=gate_id,
             gatetype=random.choice(["AND", "OR"]),
-            numinputs=4,
-            gateinput=[2 * gate_id - 1, 2 * gate_id],
-            eventinput=[2 * gate_id - 1, 2 * gate_id]
+            numinputs=num_inputs,
+            gateinput=None if not gate_input_ids else gate_input_ids,
+            eventinput=event_input_ids
         )
+
         gatelist.append(gate)
 
     fault_tree = Faulttreelist(ftheader=ftheader, gatelist=gatelist)
     fault_tree_list.append(fault_tree)
+
+
+
+    # for gate_id in range(1, gate_distribution + 1):
+    #     gate = Gatelist(
+    #         gateid=gate_id+1,
+    #         gatetype=random.choice(["AND", "OR"]),
+    #         numinputs=4,
+    #         gateinput=[2 * gate_id - 1, 2 * gate_id],
+    #         eventinput=[2 * gate_id - 1, 2 * gate_id]
+    #     )
+    #     gatelist.append(gate)
+    #
+    # fault_tree = Faulttreelist(ftheader=ftheader, gatelist=gatelist)
+    # fault_tree_list.append(fault_tree)
 
 # Generate unique IDs for basic events and add them to event_list
 for event_id in range(1, be_count + 1):
