@@ -5,8 +5,6 @@ from typing import Any, List, Optional
 from typing import Any, List
 import json
 
-
-
 T = TypeVar("T")
 EnumT = TypeVar("EnumT", bound=Enum)
 def from_int(x: Any) -> int:
@@ -78,7 +76,6 @@ class Workspacepair:
         result["ph"] = from_int(self.ph)
         result["mt"] = from_int(self.mt)
         return result
-
 
 class Initf(Enum):
     EMPTY = " "
@@ -534,8 +531,8 @@ def welcome_to_dict(x: Welcome) -> Any:
     return to_class(Welcome, x)
 
 # ...
-ft_count = 2
-be_count = 4
+ft_count = 3
+be_count = 5
 gate_count = 3
 
 # Step 2: Determine gate and basic event distribution
@@ -547,10 +544,10 @@ fault_tree_list = []
 event_list = []
 workspacepair = Workspacepair(ph=1, mt=1)
 # initalizing basic events
-eventlist_1 = Eventlist(id=ft_count+be_count+103, corrgate=0, name="<TRUE>", evworkspacepair=workspacepair, value=1, initf=Initf.EMPTY, processf=Initf.EMPTY, calctype="1")
-eventlist_2 = Eventlist(id=ft_count+be_count+102, corrgate=0, name="<FALSE>", evworkspacepair=workspacepair, value=0, initf=Initf.EMPTY, processf=Initf.EMPTY, calctype="1")
-eventlist_3 = Eventlist(id=ft_count+be_count+101, corrgate=0, name="<PASS>", evworkspacepair=workspacepair, value=1, initf=Initf.EMPTY, processf=Initf.EMPTY, calctype="1")
-eventlist_4 = Eventlist(id=ft_count+be_count+100, corrgate=0, name="INIT-EV", evworkspacepair=workspacepair, value=1, initf=Initf.I, processf=Initf.EMPTY, calctype="N")
+eventlist_1 = Eventlist(id=ft_count+be_count+103, corrgate=0, name="<TRUE>", evworkspacepair=workspacepair, value=1.00000E+00, initf=Initf.EMPTY, processf=Initf.EMPTY, calctype="1")
+eventlist_2 = Eventlist(id=ft_count+be_count+102, corrgate=0, name="<FALSE>", evworkspacepair=workspacepair, value=0.00000, initf=Initf.EMPTY, processf=Initf.EMPTY, calctype="1")
+eventlist_3 = Eventlist(id=ft_count+be_count+101, corrgate=0, name="<PASS>", evworkspacepair=workspacepair, value=1.00000E+00, initf=Initf.EMPTY, processf=Initf.EMPTY, calctype="1")
+eventlist_4 = Eventlist(id=ft_count+be_count+100, corrgate=0, name="INIT-EV", evworkspacepair=workspacepair, value=1.00000E+00, initf=Initf.I, processf=Initf.EMPTY, calctype="N")
 event_list.append(eventlist_1)
 event_list.append(eventlist_2)
 event_list.append(eventlist_3)
@@ -559,12 +556,22 @@ event_list.append(eventlist_4)
 be_used = []    # Keep track of basic events used in the fault tree
 #FT header for each fault tree
 for ft_id in range(1, ft_count + 1):
+    top_gate_id = ft_id + 1  # Unique gtid for each fault tree
     gatelist = []
 
     num_gates_in_ft = gate_distribution + (1 if ft_id == ft_count else 0)
 
     # Available gate and event input IDs for this fault tree
-    gate_input_ids = list(range(1, ft_count + 1))
+    gate_input_ids = list(range(1, top_gate_id)) + list(range(top_gate_id + 1, ft_count + 1))
+    event_input_ids = list(range(ft_count + 1, ft_count + be_count + 1))
+
+    top_gate_id = ft_count + ft_id  # Unique gtid for each fault tree
+    gatelist = []
+
+    num_gates_in_ft = gate_distribution + (1 if ft_id == ft_count else 0)
+
+    # Available gate and event input IDs for this fault tree
+    gate_input_ids = list(range(1, top_gate_id))
     event_input_ids = list(range(ft_count + 1, ft_count + be_count + 1))
     ftheader = Ftheader(
         ftid=ft_id,
@@ -574,17 +581,6 @@ for ft_id in range(1, ft_count + 1):
         numgates=num_gates_in_ft
     )
 
-    event = Eventlist(
-        id=ft_id,
-        corrgate=(ft_id % gate_count) + 1,
-        name=f"FT-{ft_id}",
-        evworkspacepair=Workspacepair(ph=1, mt=1),
-        value=1.00000E+00,
-        initf=Initf.EMPTY,
-        processf=Initf.EMPTY,
-        calctype='1'
-    )
-    event_list.append(event)
     for gate_id in range(1, num_gates_in_ft + 1):
         num_inputs = random.randint(2, be_count + 1)
         num_inputs = min(num_inputs, len(gate_input_ids) + len(event_input_ids))  # Ensure not to exceed total inputs
@@ -603,36 +599,33 @@ for ft_id in range(1, ft_count + 1):
             gateid=gate_id,
             gatetype=random.choice(["AND", "OR"]),
             numinputs=num_inputs,
-            gateinput=None if not gate_input_ids else gate_input_ids,
+            gateinput=gate_input_ids if gate_input_ids else None,
             eventinput=event_input_ids
         )
 
         gatelist.append(gate)
 
+    event = Eventlist(
+        id=ft_id,
+        corrgate="0",
+        name=f"FT-{ft_id}",
+        evworkspacepair=Workspacepair(ph=1, mt=1),
+        value=1.00000E+00,
+        initf=Initf.EMPTY,
+        processf=Initf.EMPTY,
+        calctype='1'
+    )
+    event_list.append(event)
+
     fault_tree = Faulttreelist(ftheader=ftheader, gatelist=gatelist)
     fault_tree_list.append(fault_tree)
-
-
-
-    # for gate_id in range(1, gate_distribution + 1):
-    #     gate = Gatelist(
-    #         gateid=gate_id+1,
-    #         gatetype=random.choice(["AND", "OR"]),
-    #         numinputs=4,
-    #         gateinput=[2 * gate_id - 1, 2 * gate_id],
-    #         eventinput=[2 * gate_id - 1, 2 * gate_id]
-    #     )
-    #     gatelist.append(gate)
-    #
-    # fault_tree = Faulttreelist(ftheader=ftheader, gatelist=gatelist)
-    # fault_tree_list.append(fault_tree)
 
 # Generate unique IDs for basic events and add them to event_list
 for event_id in range(1, be_count + 1):
     unique_id = ft_count + event_id
     event = Eventlist(
         id=unique_id,
-        corrgate=(event_id % gate_count) + 1,
+        corrgate="0",
         name=f"BE-{event_id}",
         evworkspacepair=Workspacepair(ph=1, mt=1),
         value=random.uniform(0, 1),
