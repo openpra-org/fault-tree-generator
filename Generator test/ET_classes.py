@@ -531,94 +531,180 @@ def welcome_to_dict(x: Welcome) -> Any:
     return to_class(Welcome, x)
 
 # ...
-ft_count = 3
-be_count = 5
-gate_count = 3
-
-# Step 2: Determine gate and basic event distribution
-gate_distribution = (gate_count - ft_count) // (ft_count - 1)
-be_distribution = be_count // ft_count
-
+# ft_count = 2
+# be_count = 10
+# gate_count = 4
+# seed_value = 123
+# random.seed(seed_value)
+#
 # Step 3: Generate synthetic event tree structure
 fault_tree_list = []
 event_list = []
 workspacepair = Workspacepair(ph=1, mt=1)
-# initalizing basic events
-eventlist_1 = Eventlist(id=ft_count+be_count+103, corrgate=0, name="<TRUE>", evworkspacepair=workspacepair, value=1.00000E+00, initf=Initf.EMPTY, processf=Initf.EMPTY, calctype="1")
-eventlist_2 = Eventlist(id=ft_count+be_count+102, corrgate=0, name="<FALSE>", evworkspacepair=workspacepair, value=0.00000, initf=Initf.EMPTY, processf=Initf.EMPTY, calctype="1")
-eventlist_3 = Eventlist(id=ft_count+be_count+101, corrgate=0, name="<PASS>", evworkspacepair=workspacepair, value=1.00000E+00, initf=Initf.EMPTY, processf=Initf.EMPTY, calctype="1")
-eventlist_4 = Eventlist(id=ft_count+be_count+100, corrgate=0, name="INIT-EV", evworkspacepair=workspacepair, value=1.00000E+00, initf=Initf.I, processf=Initf.EMPTY, calctype="N")
-event_list.append(eventlist_1)
-event_list.append(eventlist_2)
-event_list.append(eventlist_3)
-event_list.append(eventlist_4)
+# # initalizing basic events
+# eventlist_1 = Eventlist(id=ft_count+be_count+103, corrgate=0, name="<TRUE>", evworkspacepair=workspacepair, value=1.00000E+00, initf=Initf.EMPTY, processf=Initf.EMPTY, calctype="1")
+# eventlist_2 = Eventlist(id=ft_count+be_count+102, corrgate=0, name="<FALSE>", evworkspacepair=workspacepair, value=0.00000, initf=Initf.EMPTY, processf=Initf.EMPTY, calctype="1")
+# eventlist_3 = Eventlist(id=ft_count+be_count+101, corrgate=0, name="<PASS>", evworkspacepair=workspacepair, value=1.00000E+00, initf=Initf.EMPTY, processf=Initf.EMPTY, calctype="1")
+# eventlist_4 = Eventlist(id=ft_count+be_count+100, corrgate=0, name="INIT-EV", evworkspacepair=workspacepair, value=1.00000E+00, initf=Initf.I, processf=Initf.EMPTY, calctype="N")
+# event_list.append(eventlist_1)
+# event_list.append(eventlist_2)
+# event_list.append(eventlist_3)
+# event_list.append(eventlist_4)
+#
+# be_used = []    # Keep track of basic events used in the fault tree
+# #FT header for each fault tree
+#
+# def monte_carlo_fault_tree_distribution(ft_count, gate_count, be_count):
+#
+#     for ft_id in range(1, ft_count + 1):
+#         # Calculate the average number of gates per fault tree
+#         avg_gates_per_ft = gate_count // ft_count
+#         # Calculate the average number of basic events per fault tree
+#         avg_be_per_ft = be_count // ft_count
+#
+#         num_gates_in_ft = avg_gates_per_ft + (1 if ft_id <= gate_count % ft_count else 0)
+#         num_be_in_ft = avg_be_per_ft + (1 if ft_id <= be_count % ft_count else 0)
+#         # Generate unique gate IDs for this fault tree
+#         all_gate_ids = list(range(1, gate_count + 1))
+#         gate_ids = random.sample(all_gate_ids, num_gates_in_ft)
+#         all_gate_ids = [gate_id for gate_id in all_gate_ids if gate_id not in gate_ids]
+#         all_be_ids = list(range(ft_count + 1, ft_count + be_count + 1))
+#         event_ids = random.sample(all_be_ids, num_be_in_ft)
+#         all_be_ids = [be_id for be_id in all_be_ids if be_id not in event_ids]
+#         gatelist = []
+#
+#         for gate_id in range(1, num_gates_in_ft + 1):
+#
+#             # Randomly select gates and events for this fault tree
+#             gate_ids = random.sample(all_gate_ids, num_gates_in_ft)
+#             event_ids = random.sample(all_be_ids, num_be_in_ft)
+#             total = gate_ids + event_ids
+#             num_input = len(total)
+#
+#
+#             gate = Gatelist(
+#                 gateid=gate_id,
+#                 gatetype=random.choice(["AND", "OR"]),
+#                 numinputs=num_input,
+#                 gateinput=gate_ids if gate_ids else None,
+#                 eventinput=event_ids
+#             )
+#
+#             gatelist.append(gate)
+#
+#
+#         top_gate = random.choice(gatelist)
+#         top_gate_id = top_gate.gateid
+#
+#         ftheader = Ftheader(
+#             ftid=ft_id,
+#             gtid=top_gate_id,
+#             evid=ft_id,
+#             defflag=0,
+#             numgates=num_gates_in_ft
+#         )
+#
+#         event = Eventlist(
+#             id=ft_id,
+#             corrgate="0",
+#             name=f"FT-{ft_id}",
+#             evworkspacepair=Workspacepair(ph=1, mt=1),
+#             value=1.00000E+00,
+#             initf=Initf.EMPTY,
+#             processf=Initf.EMPTY,
+#             calctype='1'
+#         )
+#         event_list.append(event)
+#
+#         fault_tree = Faulttreelist(ftheader=ftheader, gatelist=gatelist)
+#         fault_tree_list.append(fault_tree)
+# monte_carlo_fault_tree_distribution(ft_count, gate_count, be_count)
 
-be_used = []    # Keep track of basic events used in the fault tree
-#FT header for each fault tree
-for ft_id in range(1, ft_count + 1):
-    top_gate_id = ft_id + 1  # Unique gtid for each fault tree
-    gatelist = []
+import random
 
-    num_gates_in_ft = gate_distribution + (1 if ft_id == ft_count else 0)
+# Example usage:
+ft_count = 2
+gate_count = 4
+be_count = 8
+seed_value = 123
+# ...
 
-    # Available gate and event input IDs for this fault tree
-    gate_input_ids = list(range(1, top_gate_id)) + list(range(top_gate_id + 1, ft_count + 1))
-    event_input_ids = list(range(ft_count + 1, ft_count + be_count + 1))
+def monte_carlo_fault_tree_distribution(ft_count, gate_count, be_count, seed=None):
+    if seed is not None:
+        random.seed(seed)
 
-    top_gate_id = ft_count + ft_id  # Unique gtid for each fault tree
-    gatelist = []
 
-    num_gates_in_ft = gate_distribution + (1 if ft_id == ft_count else 0)
+    be_used = []  # Keep track of basic events used in the fault tree
+    # FT header for each fault tree
 
-    # Available gate and event input IDs for this fault tree
-    gate_input_ids = list(range(1, top_gate_id))
-    event_input_ids = list(range(ft_count + 1, ft_count + be_count + 1))
-    ftheader = Ftheader(
-        ftid=ft_id,
-        gtid=top_gate_id,
-        evid=ft_id,
-        defflag=0,
-        numgates=num_gates_in_ft
-    )
+    for ft_id in range(1, ft_count + 1):
+        gatelist = []
+        num_gates_in_ft = gate_count // ft_count + (1 if ft_id <= gate_count % ft_count else 0)
+        num_be_in_ft = be_count // ft_count + (1 if ft_id <= be_count % ft_count else 0)
 
-    for gate_id in range(1, num_gates_in_ft + 1):
-        num_inputs = random.randint(2, be_count + 1)
-        num_inputs = min(num_inputs, len(gate_input_ids) + len(event_input_ids))  # Ensure not to exceed total inputs
+        # Generate unique gate IDs for this fault tree
+        all_gate_ids = list(range(1, gate_count + 1))
+        gate_ids = random.sample(all_gate_ids, num_gates_in_ft)
+        all_gate_ids = [gate_id for gate_id in all_gate_ids if gate_id not in gate_ids]
 
-        # Randomly select unique IDs from the available pool of gate and event IDs
-        selected_input_ids = random.sample(gate_input_ids + event_input_ids, num_inputs)
+        # Generate unique basic event IDs for this fault tree
+        all_be_ids = list(range(ft_count * gate_count + 1, ft_count * gate_count + be_count + 1))
+        event_ids = random.sample(all_be_ids, num_be_in_ft)
+        all_be_ids = [be_id for be_id in all_be_ids if be_id not in event_ids]
 
-        # Separate gate and event input IDs based on the selected IDs
-        gate_input_ids = [input_id for input_id in selected_input_ids if input_id <= ft_count]
-        event_input_ids = [input_id for input_id in selected_input_ids if input_id > ft_count]
+        for gate_id in range(1, num_gates_in_ft + 1):
 
-        # Update the list of used basic events
-        be_used.extend(event_input_ids)
+            available_gate_ids = [id for id in all_gate_ids if id != gate_id]
+            num_gate_inputs = min(num_gates_in_ft - 1, random.randint(0, num_gates_in_ft - 1))
+            selected_gate_ids = random.sample(available_gate_ids, num_gate_inputs)
+            all_gate_ids = [id for id in all_gate_ids if id not in selected_gate_ids]
 
-        gate = Gatelist(
-            gateid=gate_id,
-            gatetype=random.choice(["AND", "OR"]),
-            numinputs=num_inputs,
-            gateinput=gate_input_ids if gate_input_ids else None,
-            eventinput=event_input_ids
+            num_available_events = len(all_be_ids)
+            num_event_inputs = min(num_gates_in_ft - num_gate_inputs, num_available_events)
+            selected_event_ids = random.sample(all_be_ids, num_event_inputs)
+            all_be_ids = [be_id for be_id in all_be_ids if be_id not in selected_event_ids]
+
+            total = selected_gate_ids + selected_event_ids
+            num_input = len(total)
+
+            gate = Gatelist(
+                gateid=gate_id,
+                gatetype=random.choice(["AND", "OR"]),
+                numinputs=num_input,
+                gateinput=selected_gate_ids if selected_gate_ids else None,
+                eventinput=selected_event_ids if selected_event_ids else None
+            )
+
+            gatelist.append(gate)
+        top_gate = random.choice(gatelist)
+        top_gate_id = top_gate.gateid
+
+        ftheader = Ftheader(
+            ftid=ft_id,
+            gtid=top_gate_id,
+            evid=ft_id,
+            defflag=0,
+            numgates=num_gates_in_ft
         )
 
-        gatelist.append(gate)
+        event = Eventlist(
+            id=ft_id,
+            corrgate="0",
+            name=f"FT-{ft_id}",
+            evworkspacepair=Workspacepair(ph=1, mt=1),
+            value=1.00000E+00,
+            initf=Initf.EMPTY,
+            processf=Initf.EMPTY,
+            calctype='1'
+        )
+        event_list.append(event)
 
-    event = Eventlist(
-        id=ft_id,
-        corrgate="0",
-        name=f"FT-{ft_id}",
-        evworkspacepair=Workspacepair(ph=1, mt=1),
-        value=1.00000E+00,
-        initf=Initf.EMPTY,
-        processf=Initf.EMPTY,
-        calctype='1'
-    )
-    event_list.append(event)
+        fault_tree = Faulttreelist(ftheader=ftheader, gatelist=gatelist)
+        fault_tree_list.append(fault_tree)
 
-    fault_tree = Faulttreelist(ftheader=ftheader, gatelist=gatelist)
-    fault_tree_list.append(fault_tree)
+
+# Generate fault trees using the Monte Carlo method with the specified seed
+monte_carlo_fault_tree_distribution(ft_count, gate_count, be_count, seed=seed_value)
 
 # Generate unique IDs for basic events and add them to event_list
 for event_id in range(1, be_count + 1):
