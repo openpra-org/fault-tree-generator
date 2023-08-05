@@ -1108,7 +1108,6 @@ def write_summary_JSON(fault_tree, printer):
     printer('-->\n')
 
 
-
 def manage_cmd_args(argv=None):
     """Manages command-line description and arguments.
 
@@ -1263,7 +1262,6 @@ def setup_factors(args):
         factors.constrain_num_gate(args.num_gate)
     factors.calculate()
     return factors
-
 
 def main(argv=None):
     """The main function of the fault tree generator.

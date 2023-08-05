@@ -535,10 +535,10 @@ def welcome_to_dict(x: Welcome) -> Any:
 import random
 
 # Example usage:
-ft_count = 3 * 3
-gate_count = 4 * 3
-be_count = 8 * 3
-seed_value = 123
+ft_count = 2
+gate_count = 4
+be_count = 8
+seed_value = 0
 # ...
 fault_tree_list = []
 event_list = []
@@ -554,7 +554,6 @@ workspacepair = Workspacepair(ph=1, mt=1)
 # event_list.append(eventlist_2)
 # event_list.append(eventlist_3)
 # event_list.append(eventlist_4)
-
 
 def monte_carlo_fault_tree_distribution(ft_count, gate_count, be_count, seed=None):
     if seed is not None:
@@ -604,13 +603,15 @@ def monte_carlo_fault_tree_distribution(ft_count, gate_count, be_count, seed=Non
             num_event_inputs = min(num_gates_in_ft - num_gate_inputs, num_available_events)
             selected_event_ids = random.sample(all_be_ids, num_event_inputs)
             all_be_ids = [be_id for be_id in all_be_ids if be_id not in selected_event_ids]
-            used_event_ids.update(selected_event_ids )
+            used_event_ids.update(selected_event_ids)
             total = selected_gate_ids + selected_event_ids
             num_input = len(total)
 
+            # top = max(event_ids)
+            # print(top)
             gate = Gatelist(
                 gateid=gate_id,
-                gatetype=random.choice(["AND", "OR"]),
+                gatetype=random.choice(["and", "or"]),
                 numinputs=num_input,
                 gateinput=selected_gate_ids if selected_gate_ids else None,
                 eventinput=selected_event_ids if selected_event_ids else []
@@ -673,6 +674,9 @@ def monte_carlo_fault_tree_distribution(ft_count, gate_count, be_count, seed=Non
     event_list.append(eventlist_2)
     event_list.append(eventlist_3)
     event_list.append(eventlist_4)
+    # top= max(event_ids)
+    # max_event_id
+    # print(top)
     return max_event_id
 
 # max_event_id = monte_carlo_fault_tree_distribution(ft_count, gate_count, be_count, seed=seed_value)
@@ -699,15 +703,15 @@ monte_carlo_fault_tree_distribution(ft_count, gate_count, be_count, seed=seed_va
 #     event_list.append(event)
 
 
-ftheader = Ftheader(ftid=1, gtid=2, evid=3, defflag=4, numgates=5)
+# ftheader = Ftheader(ftid=1, gtid=2, evid=3, defflag=4, numgates=5)
 # gatelist = Gatelist(gateid=1, gatetype="AND", numinputs=2, gateinput=[1, 2], eventinput=[3, 4])
 # faulttreelist = Faulttreelist(ftheader=ftheader, gatelist=[gatelist])
-eventtree = Eventtree(name="Tree", number=1, initevent=ft_count+be_count+100, seqphase=1)
+eventtree = Eventtree(name="Tree", number=1, initevent=114, seqphase=1)
 trunc_param = Truncparam("NormalProbCutOff", "GlobalProbCutOff", "ENoTrunc", 1.0e-14, 1.0e-14, 99, False, False, 0, False, 0.0)
 # Create an instance of Saphiresolveinput
-header = Header(projectpath="path/to/project", eventtree=eventtree, flagnum=0, ftcount=ft_count, fthigh=ft_count, sqcount=4, sqhigh=5, becount=4+ft_count+be_count, behigh=ft_count+be_count+103, mthigh=1, phhigh=1, truncparam=trunc_param, workspacepair=workspacepair, iworkspacepair=workspacepair)
+header = Header(projectpath="path/to/project", eventtree=eventtree, flagnum=0, ftcount=ft_count, fthigh=ft_count, sqcount=1, sqhigh=1, becount=4+ft_count+5, behigh=117, mthigh=1, phhigh=1, truncparam=trunc_param, workspacepair=workspacepair, iworkspacepair=workspacepair)
 # sysgatelist = [Sysgatelist(name="Gate1", id=1, gateid=2, gateorig=3, gatepos=4, eventid=5, gatecomp=6, comppos=7, compflag=Initf.I, gateflag=Initf.EMPTY, gatet=Initf.EMPTY, bddsuccess=True, done=False)]
-sequencelist = [Sequencelist(seqid=1, etid=2, initid=3, qmethod="M", qpasses=4, numlogic=5, blocksize=6, logiclist=[1, 2, 3])]
+sequencelist = [Sequencelist(seqid=1, etid=1, initid=114, qmethod="M", qpasses=0, numlogic=2, blocksize=2, logiclist=[262145, 262146])]
 
 # Convert the Welcome instance to a dictionary
 
