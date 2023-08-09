@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Any, List, Optional
 from typing import Any, List
 import json
+import argparse
 
 T = TypeVar("T")
 EnumT = TypeVar("EnumT", bound=Enum)
@@ -545,15 +546,7 @@ event_list = []
 system_gate_list = []
 
 workspacepair = Workspacepair(ph=1, mt=1)
-# initalizing basic events
-# eventlist_1 = Eventlist(id=ft_count+be_count+103, corrgate=0, name="<TRUE>", evworkspacepair=workspacepair, value=1.00000E+00, initf=Initf.EMPTY, processf=Initf.EMPTY, calctype="1")
-# eventlist_2 = Eventlist(id=ft_count+be_count+102, corrgate=0, name="<FALSE>", evworkspacepair=workspacepair, value=0.00000, initf=Initf.EMPTY, processf=Initf.EMPTY, calctype="1")
-# eventlist_3 = Eventlist(id=ft_count+be_count+101, corrgate=0, name="<PASS>", evworkspacepair=workspacepair, value=1.00000E+00, initf=Initf.EMPTY, processf=Initf.EMPTY, calctype="1")
-# eventlist_4 = Eventlist(id=ft_count+be_count+100, corrgate=0, name="INIT-EV", evworkspacepair=workspacepair, value=1.00000E+00, initf=Initf.I, processf=Initf.EMPTY, calctype="N")
-# event_list.append(eventlist_1)
-# event_list.append(eventlist_2)
-# event_list.append(eventlist_3)
-# event_list.append(eventlist_4)
+
 
 def monte_carlo_fault_tree_distribution(ft_count, gate_count, be_count, seed=None):
     if seed is not None:
@@ -562,6 +555,7 @@ def monte_carlo_fault_tree_distribution(ft_count, gate_count, be_count, seed=Non
     used_gate_ids = set()
     used_event_ids = set()
     max_event_id = 0  # Initialize the maximum event_id to 0
+    added_gate_ids = []
     for ft_id in range(1, ft_count + 1):
         gatelist = []
         num_gates_in_ft = gate_count // ft_count + (1 if ft_id <= gate_count % ft_count else 0)
@@ -571,13 +565,11 @@ def monte_carlo_fault_tree_distribution(ft_count, gate_count, be_count, seed=Non
         all_gate_ids = list(range(1, gate_count + 1))
         gate_ids = random.sample(all_gate_ids, num_gates_in_ft)
         all_gate_ids = [gate_id for gate_id in all_gate_ids if gate_id not in gate_ids and gate_id not in used_gate_ids]
-
+        print("debug")
         # Generate unique basic event IDs for this fault tree
         all_be_ids = list(range(ft_count * gate_count + 1, ft_count * gate_count + be_count + 1))
         event_ids = random.sample(all_be_ids, num_be_in_ft)
         all_be_ids = [be_id for be_id in all_be_ids if be_id not in event_ids and be_id not in used_event_ids]
-        max_event_id = max(max_event_id, max(event_ids))
-
 
         # Start gate_id from 1 for each fault tree
         event = Eventlist(
@@ -591,12 +583,15 @@ def monte_carlo_fault_tree_distribution(ft_count, gate_count, be_count, seed=Non
             calctype='1'
         )
         event_list.append(event)
+
         while len(gatelist) < num_gates_in_ft:
             gate_id = gate_id_counter
             available_gate_ids = [id for id in all_gate_ids if id != gate_id]
             num_gate_inputs = min(num_gates_in_ft - 1, random.randint(0, num_gates_in_ft - 1))
             selected_gate_ids = random.sample(available_gate_ids, num_gate_inputs)
+
             all_gate_ids = [id for id in all_gate_ids if id not in selected_gate_ids]
+
             used_gate_ids.update(selected_gate_ids)
 
             num_available_events = len(all_be_ids)
@@ -606,9 +601,7 @@ def monte_carlo_fault_tree_distribution(ft_count, gate_count, be_count, seed=Non
             used_event_ids.update(selected_event_ids)
             total = selected_gate_ids + selected_event_ids
             num_input = len(total)
-
-            # top = max(event_ids)
-            # print(top)
+            max_event_id = max(max_event_id, max(selected_event_ids))
             gate = Gatelist(
                 gateid=gate_id,
                 gatetype=random.choice(["and", "or"]),
@@ -616,6 +609,40 @@ def monte_carlo_fault_tree_distribution(ft_count, gate_count, be_count, seed=Non
                 gateinput=selected_gate_ids if selected_gate_ids else None,
                 eventinput=selected_event_ids if selected_event_ids else []
             )
+            gatelist.append(gate)
+
+
+            for gate_id in selected_gate_ids:
+
+                if gate_id not in added_gate_ids:
+                    event_input_ids = []
+
+                    # Randomly select eventinput IDs for the new gate
+                    num_event_inputs_for_gate = min(num_gates_in_ft - len(selected_gate_ids), num_available_events)
+                    event_input_ids = random.sample(all_be_ids, num_event_inputs_for_gate)
+
+                    # Create the new gate with the selected inputs
+                    gate = Gatelist(
+                        gateid=gate_id,
+                        gatetype=random.choice(["and", "or"]),
+                        numinputs=len(event_input_ids),
+                        eventinput=event_input_ids if event_input_ids else []
+                    )
+
+                    gatelist.append(gate)
+                    added_gate_ids.append(gate_id)
+
+                    top_gate = random.choice(gatelist)
+                    top_gate_id = top_gate.gateid
+                    max_event_id = max(max_event_id, max(event_ids))
+                    # print(max_event_id)
+                    ftheader = Ftheader(
+                        ftid=ft_id,
+                        gtid=top_gate_id,
+                        evid=ft_id,
+                        defflag=0,
+                        numgates=num_gates_in_ft
+                    )
 
             for event_id in selected_event_ids:
                 event = Eventlist(
@@ -630,19 +657,8 @@ def monte_carlo_fault_tree_distribution(ft_count, gate_count, be_count, seed=Non
                 )
                 event_list.append(event)
             gate_id_counter += 1
-            gatelist.append(gate)
+            # gatelist.append(gate)
 
-        top_gate = random.choice(gatelist)
-        top_gate_id = top_gate.gateid
-        max_event_id = max(max_event_id, max(event_ids))
-        # print(max_event_id)
-        ftheader = Ftheader(
-            ftid=ft_id,
-            gtid=top_gate_id,
-            evid=ft_id,
-            defflag=0,
-            numgates=num_gates_in_ft
-        )
 
         sysgatelist =Sysgatelist(
             name=f"FT-{ft_id}",
@@ -674,43 +690,17 @@ def monte_carlo_fault_tree_distribution(ft_count, gate_count, be_count, seed=Non
     event_list.append(eventlist_2)
     event_list.append(eventlist_3)
     event_list.append(eventlist_4)
-    # top= max(event_ids)
-    # max_event_id
-    # print(top)
-    return max_event_id
-
-# max_event_id = monte_carlo_fault_tree_distribution(ft_count, gate_count, be_count, seed=seed_value)
-# print("Maximum event_id:", max_event_id)
-
 
 
 # Generate fault trees using the Monte Carlo method with the specified seed
 monte_carlo_fault_tree_distribution(ft_count, gate_count, be_count, seed=seed_value)
 
-# Generate unique IDs for basic events and add them to event_list
-# for event_id in range(1, be_count + 1):
-#     unique_id = ft_count + event_id
-#     event = Eventlist(
-#         id=unique_id,
-#         corrgate="0",
-#         name=f"BE-{event_id}",
-#         evworkspacepair=Workspacepair(ph=1, mt=1),
-#         value=random.uniform(0, 1),
-#         initf=Initf.EMPTY,
-#         processf=Initf.EMPTY,
-#         calctype='1'
-#     )
-#     event_list.append(event)
 
-
-# ftheader = Ftheader(ftid=1, gtid=2, evid=3, defflag=4, numgates=5)
-# gatelist = Gatelist(gateid=1, gatetype="AND", numinputs=2, gateinput=[1, 2], eventinput=[3, 4])
-# faulttreelist = Faulttreelist(ftheader=ftheader, gatelist=[gatelist])
-eventtree = Eventtree(name="Tree", number=1, initevent=114, seqphase=1)
+eventtree = Eventtree(name="Tree", number=1, initevent=116, seqphase=1)
 trunc_param = Truncparam("NormalProbCutOff", "GlobalProbCutOff", "ENoTrunc", 1.0e-14, 1.0e-14, 99, False, False, 0, False, 0.0)
 # Create an instance of Saphiresolveinput
 header = Header(projectpath="path/to/project", eventtree=eventtree, flagnum=0, ftcount=ft_count, fthigh=ft_count, sqcount=1, sqhigh=1, becount=4+ft_count+5, behigh=117, mthigh=1, phhigh=1, truncparam=trunc_param, workspacepair=workspacepair, iworkspacepair=workspacepair)
-# sysgatelist = [Sysgatelist(name="Gate1", id=1, gateid=2, gateorig=3, gatepos=4, eventid=5, gatecomp=6, comppos=7, compflag=Initf.I, gateflag=Initf.EMPTY, gatet=Initf.EMPTY, bddsuccess=True, done=False)]
+
 sequencelist = [Sequencelist(seqid=1, etid=1, initid=114, qmethod="M", qpasses=0, numlogic=2, blocksize=2, logiclist=[262145, 262146])]
 
 # Convert the Welcome instance to a dictionary
@@ -718,8 +708,38 @@ sequencelist = [Sequencelist(seqid=1, etid=1, initid=114, qmethod="M", qpasses=0
 saphiresolveinput = Saphiresolveinput(header=header, sysgatelist=system_gate_list, faulttreelist=fault_tree_list, sequencelist=sequencelist, eventlist=event_list)
 welcome = Welcome(version="1.0.0", saphiresolveinput=saphiresolveinput)
 
-# Convert the instance to a dictionary
-welcome_dict = welcome.to_dict()
-json_string = json.dumps(welcome_dict, indent=4)
+# # Convert the instance to a dictionary
+# welcome_dict = welcome.to_dict()
+# json_string = json.dumps(welcome_dict, indent=4)
+#
+# print(json_string)
+#
+#
+# # Assuming you have the 'welcome' object and you have already converted it to a dictionary
+# welcome_dict = welcome.to_dict()
+#
+# # Specify the file path where you want to save the JSON data
+# file_path = "fifth_test.JSInp"
+#
+# # Write the JSON data to the file in UTF-8 encoding
+# with open(file_path, "w", encoding="utf-8") as json_file:
+#     json.dump(welcome_dict, json_file, indent=4, ensure_ascii=False)
+#
+# print("JSON data has been written to:", file_path)
 
-print(json_string)
+# Assuming you have the 'welcome' object and you have already converted it to a dictionary
+welcome_dict = welcome.to_dict()
+
+def write_json_to_file(data, file_path):
+    with open(file_path, "w", encoding="utf-8") as json_file:
+        json.dump(data, json_file, indent=4, ensure_ascii=False)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Write JSON data to a file.")
+    parser.add_argument("output_file", help="Name of the output JSON file")
+    args = parser.parse_args()
+
+    output_file = args.output_file
+    write_json_to_file(welcome_dict, output_file)
+
+    print("JSON data has been written to:", output_file)
