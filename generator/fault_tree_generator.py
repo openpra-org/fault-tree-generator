@@ -46,11 +46,11 @@ import random
 import sys
 
 import argparse as ap
-from generator.probability.point_estimate import PointEstimate
-
-from generator.event.basic_event import BasicEvent
-from generator.event.house_event import HouseEvent
-from generator.event.gate import Gate
+# from generator.probability.point_estimate import PointEstimate
+#
+# from generator.event.basic_event import BasicEvent
+# from generator.event.house_event import HouseEvent
+# from generator.event.gate import Gate
 
 from fault_tree import CcfGroup, FaultTree
 
