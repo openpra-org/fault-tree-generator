@@ -14,7 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """Fault tree classes and common facilities."""
 
-from ordered_set import OrderedSet
+# from ordered_set import OrderedSet
 
 from collections import deque
 

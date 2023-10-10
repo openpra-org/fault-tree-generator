@@ -1017,8 +1017,6 @@ def get_size_summary(fault_tree, printer):
     printer('The number of basic events: ', len(fault_tree.basic_events))
     printer('The number of house events: ', len(fault_tree.house_events))
     printer('The number of CCF groups: ', len(fault_tree.ccf_groups))
-    printer('maximum CCF size: ', fault_tree.factors.ccf_size)
-    printer('CCF model: ', fault_tree.factors.ccf_model)
     printer('The number of gates: ', len(fault_tree.gates))
     printer('    AND gates: ', gate_count['and'])
     printer('    OR gates: ', gate_count['or'])
@@ -1159,7 +1157,7 @@ def manage_cmd_args(argv=None):
                         nargs="+",
                         metavar="float",
                         help="weights for [AND, OR, K/N, NOT, XOR] gates",
-                        default=[1, 1, 1, 0, 0])
+                        default=[1, 3, 0, 0, 0])
     parser.add_argument("--common-b",
                         type=float,
                         default=0.1,
@@ -1204,7 +1202,7 @@ def manage_cmd_args(argv=None):
     parser.add_argument("--num-ccf",
                         type=int,
                         help="# of ccf groups",
-                        default=0,
+                        default=2,
                         metavar="int")
     parser.add_argument("--ccf-size",
                         type=int,
