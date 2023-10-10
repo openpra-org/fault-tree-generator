@@ -141,15 +141,10 @@ class GeneratorFaultTree(FaultTree):
             for i,k in zip(beta_factors,tot):
                     ccf_factors = (1/comb(len(range(levels))-1,k))*(1 - i) * n
                     n = i*n
-                    # print('n',n)
+
                     ccf_group.factors.append(ccf_factors)
 
-            # print(ccf_group.actors)
-            # ccf_group.factors = sorted([(_* for _ in tests], reverse = True)
-            # ccf_group.factors.append(ccf_group.factors)
-            # print("ccf_test", ccf_group.factors)
 
-            # ccf_group.factors = sorted([(random.uniform(0.1, 1)) for _ in range(levels - 1)], reverse=True)
 
         else:
             summation = 0
@@ -174,27 +169,7 @@ class GeneratorFaultTree(FaultTree):
                     total += alpha
 
             summation += total
-            # print("sum", summation)
-            # ccf_group.factors = sorted([(_/summation) for _ in range(levels)], reverse=True)
+
             ccf_group.factors = sorted([(_ / summation) for _ in alpha_factors], reverse = True)
-            # print("levels", range(levels))
 
-            # ccf_group.factors = sorted([(random.uniform(0.1, 1)) for _ in range(levels)], reverse=True)
-            # test_sum = sum(ccf_group.factors)
-            # ccf_group.factors.append(ccf_group.factors)
-            # print(ccf_group.factors)
-
-            # for i in ccf_group.factors:
-            #     print(i)
-            #     store += i
-            #     print(store)
-            # test = list(map(float, ccf_group.factors))
-            # total = math.fsum(test)
-            # print(test)
-
-            # print(sum(ccf_group.factors))
-            # w = numpy.array(ccf_group.factors)
-            # print("test",w)
-            # print("ccf_test",ccf_group.factors)
-            # print("tests_sum",summ)
         return ccf_group
