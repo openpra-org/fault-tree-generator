@@ -46,11 +46,11 @@ import random
 import sys
 
 import argparse as ap
-# from generator.probability.point_estimate import PointEstimate
+# from generator_old.probability.point_estimate import PointEstimate
 #
-# from generator.event.basic_event import BasicEvent
-# from generator.event.house_event import HouseEvent
-# from generator.event.gate import Gate
+# from generator_old.event.basic_event import BasicEvent
+# from generator_old.event.house_event import HouseEvent
+# from generator_old.event.gate import Gate
 
 from fault_tree import CcfGroup, FaultTree
 
@@ -488,7 +488,7 @@ class GeneratorFaultTree(FaultTree):
 
 
 def candidate_gates(common_gate):
-    """Lazy generator of candidates for common gates.
+    """Lazy generator_old of candidates for common gates.
 
     Args:
         common_gate: A list of common gates.
@@ -707,7 +707,7 @@ def write_info(fault_tree, printer, seed):
     Args:
         fault_tree: A full, valid, well-formed fault tree.
         printer: The output stream.
-        seed: The seed of the pseudo-random number generator.
+        seed: The seed of the pseudo-random number generator_old.
     """
     factors = fault_tree.factors
     printer('<?xml version="1.0"?>')
@@ -717,7 +717,7 @@ def write_info(fault_tree, printer, seed):
     printer('The fault tree name: ', fault_tree.name)
     printer('The root gate name: ', fault_tree.top_gate.name)
     printer()
-    printer('The seed of the random number generator: ', seed)
+    printer('The seed of the random number generator_old: ', seed)
     printer('The number of basic events: ', factors.num_basic)
     printer('The number of house events: ', factors.num_house)
     printer('The number of CCF groups: ', factors.num_ccf)
@@ -965,7 +965,7 @@ def setup_factors(args):
 
 
 def main(argv=None):
-    """The main function of the fault tree generator.
+    """The main function of the fault tree generator_old.
 
     Args:
         argv: An optional list containing the command-line arguments.

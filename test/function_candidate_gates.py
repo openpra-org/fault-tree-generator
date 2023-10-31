@@ -1,5 +1,5 @@
 def candidate_gates(common_gate):
-    """Lazy generator of candidates for common gates.
+    """Lazy generator_old of candidates for common gates.
 
     Args:
         common_gate: A list of common gates.

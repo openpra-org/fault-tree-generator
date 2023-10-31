@@ -1,5 +1,5 @@
-from generator.event.Event import Event
-from generator.probability import Probability
+from generator_old.event.Event import Event
+from generator_old.probability import Probability
 
 
 class BasicEvent(Event):

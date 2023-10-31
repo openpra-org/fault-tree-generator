@@ -1,4 +1,4 @@
-from generator.event.Event import Event
+from generator_old.event.Event import Event
 
 
 class HouseEvent(Event):

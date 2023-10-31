@@ -1,9 +1,9 @@
 from collections import deque
 from ordered_set import OrderedSet
 
-from generator.event.basic_event import BasicEvent
-from generator.event.Event import Event
-from generator.event.house_event import HouseEvent
+from generator_old.event.basic_event import BasicEvent
+from generator_old.event.Event import Event
+from generator_old.event.house_event import HouseEvent
 
 
 class Gate(Event):  # pylint: disable=too-many-instance-attributes

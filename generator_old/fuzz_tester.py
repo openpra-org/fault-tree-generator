@@ -99,10 +99,10 @@ class Config(object):
 
 
 def generate_input(normal, coherent, output_dir=None):
-    """Calls fault tree generator.
+    """Calls fault tree generator_old.
 
     The auto-generated input file is located in the run-time directory
-    with the default name given by the fault tree generator.
+    with the default name given by the fault tree generator_old.
 
     Args:
         normal: Flag for models with AND/OR gates only.

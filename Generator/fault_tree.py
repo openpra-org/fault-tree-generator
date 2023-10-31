@@ -184,7 +184,15 @@ class BasicEvent(Event):
         else:
               printer('},')
 
+    def to_FTREX_ID(self, printer):
+        """Produces FTREX definition of the basic event."""
+        printer("import")
+        printer(self.prob, self.name.strip('B'))
 
+    def to_FTREX_NAME(self, printer):
+        """Produces FTREX definition of the basic event."""
+        printer("import")
+        printer(self.prob, self.name)
 class HouseEvent(Event):
     """Representation of a house event in a fault tree.
 

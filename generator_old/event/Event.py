@@ -18,7 +18,7 @@ class Event(object):
             name: Identifier for the node.
         """
         self.name: str = name
-        from generator.event.gate import Gate
+        from generator_old.event.gate import Gate
         self.parents: OrderedSet[Gate] = OrderedSet()
 
     def __str__(self):

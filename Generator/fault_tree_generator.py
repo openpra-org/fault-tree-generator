@@ -593,7 +593,7 @@ class GeneratorFaultTree(FaultTree):
 
 
 def candidate_gates(common_gate):
-    """Lazy generator of candidates for common gates.
+    """Lazy generator_old of candidates for common gates.
 
     Args:
         common_gate: A list of common gates.
@@ -827,7 +827,7 @@ def write_info(fault_tree, printer, seed):
     Args:
         fault_tree: A full, valid, well-formed fault tree.
         printer: The output stream.
-        seed: The seed of the pseudo-random number generator.
+        seed: The seed of the pseudo-random number generator_old.
     """
     factors = fault_tree.factors
     printer('<?xml version="1.0"?>')
@@ -837,7 +837,7 @@ def write_info(fault_tree, printer, seed):
     printer('The fault tree name: ', fault_tree.name)
     printer('The root gate name: ', fault_tree.top_gate.name)
     printer()
-    printer('The seed of the random number generator: ', seed)
+    printer('The seed of the random number generator_old: ', seed)
     printer('The number of basic events: ', factors.num_basic)
     printer('The number of house events: ', factors.num_house)
     printer('The number of CCF groups: ', factors.num_ccf)
@@ -859,7 +859,7 @@ def write_info_JSON_printer(fault_tree, printer, seed):
     Args:
         fault_tree: A full, valid, well-formed fault tree.
         printer: The output stream.
-        seed: The seed of the pseudo-random number generator.
+        seed: The seed of the pseudo-random number generator_old.
     """
     factors = fault_tree.factors
     printer('{')
@@ -998,7 +998,7 @@ def write_info_OpenPRA_JSON_printer(fault_tree, printer, seed):
     Args:
         fault_tree: A full, valid, well-formed fault tree.
         printer: The output stream.
-        seed: The seed of the pseudo-random number generator.
+        seed: The seed of the pseudo-random number generator_old.
     """
     factors = fault_tree.factors
     printer('{')
@@ -1231,6 +1231,12 @@ def manage_cmd_args(argv=None):
     parser.add_argument("--OpenPRA_json_printer",
                         action="store_true",
                         help="apply the OpenPRA JSON format to the output")
+    parser.add_argument("--FTREX_ID",
+                        action="store_true",
+                        help="apply the OpenPRA JSON format to the output")
+    parser.add_argument("--FTREX_NAME",
+                        action="store_true",
+                        help="apply the OpenPRA JSON format to the output")
     parser.add_argument("--nest",
                         action="store_true",
                         help="nest NOT connectives in Boolean formulae")
@@ -1266,7 +1272,7 @@ def setup_factors(args):
 
 
 def main(argv=None):
-    """The main function of the fault tree generator.
+    """The main function of the fault tree generator_old.
 
     Args:
         argv: An optional list containing the command-line arguments.
@@ -1292,6 +1298,12 @@ def main(argv=None):
     elif args.SAPHIRE_json_printer:
         write_info_JSON_printer(fault_tree, printer, args.seed)
         fault_tree.to_SAPHIRE_json_printer(printer, args.nest)
+    elif args.FTREX_ID:
+        # write_info_JSON_printer(fault_tree, printer, args.seed)
+        fault_tree.to_FTREX(printer, args.nest)
+    elif args.FTREX_NAME:
+        # write_info_JSON_printer(fault_tree, printer, args.seed)
+        fault_tree.to_FTREX(printer, args.nest)
     else:
         write_info(fault_tree, printer, args.seed)
         write_summary(fault_tree, printer)

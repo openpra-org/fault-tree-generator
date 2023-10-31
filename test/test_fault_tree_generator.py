@@ -12,7 +12,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Tests for the fault tree generator."""
+"""Tests for the fault tree generator_old."""
 
 from __future__ import division, absolute_import
 
@@ -24,7 +24,7 @@ from unittest import TestCase
 from lxml import etree
 import pytest
 
-from generator.fault_tree_generator import FactorError, Factors, generate_fault_tree, write_info, write_summary, main
+from generator_old.fault_tree_generator import FactorError, Factors, generate_fault_tree, write_info, write_summary, main
 
 # pylint: disable=redefined-outer-name
 
@@ -138,10 +138,10 @@ def test_constrain_num_gates(factors):
 
 
 class FaultTreeGeneratorTestCase(TestCase):
-    """General tests for the fault tree generator script."""
+    """General tests for the fault tree generator_old script."""
 
     def setUp(self):
-        """Initializes the generator factors for default complexity."""
+        """Initializes the generator_old factors for default complexity."""
         self.output = NamedTemporaryFile(mode="w+")
         random.seed(123)
         self.factors = Factors()
@@ -195,7 +195,7 @@ class FaultTreeGeneratorTestCase(TestCase):
 
 
 def test_main():
-    """Tests the main() of the generator."""
+    """Tests the main() of the generator_old."""
     tmp = NamedTemporaryFile(mode="w+")
     main(["-b", "200", "-g", "200", "-o", tmp.name])
     relaxng_doc = etree.parse("../share/input.rng")

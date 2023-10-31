@@ -1,4 +1,4 @@
-from generator.probability.Probability import Probability
+from generator_old.probability.Probability import Probability
 
 
 class PointEstimate(Probability):

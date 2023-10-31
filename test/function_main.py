@@ -1,5 +1,5 @@
 def main(argv=None):
-    """The main function of the fault tree generator.
+    """The main function of the fault tree generator_old.
 
     Args:
         argv: An optional list containing the command-line arguments.
