@@ -184,15 +184,27 @@ class BasicEvent(Event):
         else:
               printer('},')
 
+    # def to_FTREX_ID(self, printer):
+    #     """Produces FTREX definition of the basic event."""
+    #     formatted_prob = f"{self.prob:.14f}"
+    #     printer("  " , formatted_prob," " , self.name.strip('B'))
+
     def to_FTREX_ID(self, printer):
         """Produces FTREX definition of the basic event."""
-        printer("import")
-        printer(self.prob, self.name.strip('B'))
+        formatted_prob = f"{self.prob:.14f}"
+        # Extract the number from the original name
+        original_number = self.name.lstrip('B')
+        # Pad the number with zeros to make it 10 digits long
+        formatted_number = f"{int(original_number):08}"
+        # Create the FTREX ID by combining "11" with the formatted number
+        ftrex_id = f"11{formatted_number}"
+        # Modify this line to match the desired format
+        printer(f" {formatted_prob} {ftrex_id}")
 
     def to_FTREX_NAME(self, printer):
         """Produces FTREX definition of the basic event."""
-        printer("import")
-        printer(self.prob, self.name)
+        formatted_prob = f"{self.prob:.14f}"
+        printer("  ", formatted_prob, " ", self.name)
 class HouseEvent(Event):
     """Representation of a house event in a fault tree.
 
@@ -325,15 +337,6 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
             mef_xml += args_to_xml("house-event", gate.h_arguments)
             mef_xml += args_to_xml("basic-event", gate.b_arguments)
             mef_xml += args_to_xml("event", gate.u_arguments)
-            # print("self.members", self.members)
-            # if gate.b_arguments:
-            #     print("BE", gate.b_arguments)
-            #     # OpenPRA_JSON_format += "\"eventinput\": [\n"
-            #     for i in gate.b_arguments:
-            #         if i in self.members:
-            # # for member in self.members:
-            # #     if gate.b_arguments == "B59":
-            #             mef_xml += args_to_xml("basic-event", "CCF")
 
             def converter(arg_gate):
                 """Converter for single nesting NOT connective."""
@@ -379,7 +382,6 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
         def basic_name_to_number_last(arg):
             return "%s\n" % (arg.name.strip('B'))
 
-
         def convert_formula(gate, last=False):
             """Converts the formula of a gate into SAPHIRE JSON representation."""
             JSON_format = ""
@@ -416,7 +418,6 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
                         JSON_format += basic_name_to_number( i)
                 JSON_format += "]"
             return JSON_format
-
 
         printer('{')
         printer('\"gateid\":', self.name.strip('Groot'), ",")
@@ -639,6 +640,87 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
         line.append(div.join(args))
         line.append(line_end)
         printer("".join(line))
+
+    def to_FTREX_ID(self, printer, nest=False):
+        """Produces the FTREX_ID definition of the gate.
+
+        Args:
+            printer: The output stream.
+            nest: Nesting of NOT connectives in formulas.
+        """
+
+        def arg_to_FTREX_ID(arg):
+            """Produces XML string representation of an argument with "B" or "G" stripped."""
+            return arg.name.lstrip('BGroot')
+
+        def args_to_FTREX_ID(args):
+            """Produces XML string representation of arguments."""
+            return " ".join(arg_to_FTREX_ID(arg) for arg in args)
+
+        def convert_formula(gate, nest=False):
+            """Converts the formula of a gate into XML representation."""
+            FTREX_ID_Format = ""
+            if gate.operator == "or":
+                FTREX_ID_Format += "+"
+            elif gate.operator == "and":
+                FTREX_ID_Format += "*"
+            # FTREX_ID_Format += " " + args_to_FTREX_ID(gate.b_arguments)
+            FTREX_ID_Format += " " + " ".join(f"11{int(arg.name.lstrip('B')):08}" for arg in gate.b_arguments)
+
+            def converter(arg_gate):
+                """Converter for single nesting NOT connective."""
+                if gate.operator != "not" and arg_gate.operator == "not":
+                    return convert_formula(arg_gate)
+                return arg_to_FTREX_ID(arg_gate)
+
+            if nest:
+                FTREX_ID_Format += " " + " ".join(f"0{int(x.name.lstrip('G')):09}" for x in gate.g_arguments)
+            else:
+                FTREX_ID_Format += " " + " ".join(f"0{int(x.name.lstrip('G')):09}" for x in gate.g_arguments)
+            return FTREX_ID_Format
+
+        printer(f"0{int(self.name.lstrip('BGroot')):09} {convert_formula(self, nest)}")
+
+
+    def to_FTREX_NAME(self, printer, nest=False):
+        """Produces the FTREX_NAME definition of the gate.
+
+        Args:
+            printer: The output stream.
+            nest: Nesting of NOT connectives in formulas.
+        """
+
+        def arg_to_FTREX_NAME(arg):
+            """Produces XML string representation of an argument."""
+            return arg.name
+
+        def args_to_FTREX_NAME(args):
+            """Produces XML string representation of arguments."""
+            return " ".join(arg_to_FTREX_NAME(arg) for arg in args)
+
+        def convert_formula(gate, nest=False):
+            """Converts the formula of a gate into XML representation."""
+            FTREX_NAME_Format = ""
+            if gate.operator == "or":
+                FTREX_NAME_Format += "+"
+            elif gate.operator == "and":
+                FTREX_NAME_Format += "*"
+            FTREX_NAME_Format += " " + args_to_FTREX_NAME(gate.b_arguments)
+
+            def converter(arg_gate):
+                """Converter for single nesting NOT connective."""
+                if gate.operator != "not" and arg_gate.operator == "not":
+                    return convert_formula(arg_gate)
+                return arg_to_FTREX_NAME(arg_gate)
+
+            if nest:
+                FTREX_NAME_Format += " " + " ".join(converter(x) for x in gate.g_arguments)
+            else:
+                FTREX_NAME_Format += " " + args_to_FTREX_NAME(gate.g_arguments)
+
+            return FTREX_NAME_Format
+
+        printer(f"{self.name} {convert_formula(self, nest)}")
 
 
 class CcfGroup:  # pylint: disable=too-few-public-methods
@@ -1129,11 +1211,43 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
         printer('}')
         printer('}')
 
+    def to_FTREX_ID(self, printer, nest=False):
+        """Produces the FTREX_ID definition of the fault tree.
+
+        The fault tree is produced breadth-first.
+        """
+
+        sorted_gates = toposort_gates(self.top_gates or [self.top_gate],
+                                      self.gates)
+        for gate in sorted_gates:
+            gate.to_FTREX_ID(printer, nest)
+        printer("ENDTREE")
+        printer("PROCESS 0000080000")
+        printer("import")
+        for basic_event in (self.non_ccf_events
+                            if self.ccf_groups else self.basic_events):
+            basic_event.to_FTREX_ID(printer)
+        #truncation limit
+        printer("LIMIT 1E-10")
+    def to_FTREX_NAME(self, printer, nest=False):
+        """Produces the FTREX_NAME definition of the fault tree.
+
+        The fault tree is produced breadth-first.
+        """
 
 
-
-
-
+        sorted_gates = toposort_gates(self.top_gates or [self.top_gate],
+                                      self.gates)
+        for gate in sorted_gates:
+            gate.to_FTREX_NAME(printer, nest)
+        printer("ENDTREE")
+        printer("PROCESS root80000")
+        printer("import")
+        for basic_event in (self.non_ccf_events
+                            if self.ccf_groups else self.basic_events):
+            basic_event.to_FTREX_NAME(printer)
+        #truncation limit
+        printer("LIMIT 1E-10")
 
 
 

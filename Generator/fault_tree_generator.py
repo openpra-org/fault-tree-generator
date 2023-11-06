@@ -1144,7 +1144,7 @@ def manage_cmd_args(argv=None):
                         "--num-basic",
                         type=int,
                         help="# of basic events",
-                        default=100,
+                        default=1000,
                         metavar="int")
     parser.add_argument("-a",
                         "--num-args",
@@ -1300,10 +1300,10 @@ def main(argv=None):
         fault_tree.to_SAPHIRE_json_printer(printer, args.nest)
     elif args.FTREX_ID:
         # write_info_JSON_printer(fault_tree, printer, args.seed)
-        fault_tree.to_FTREX(printer, args.nest)
+        fault_tree.to_FTREX_ID(printer, args.nest)
     elif args.FTREX_NAME:
         # write_info_JSON_printer(fault_tree, printer, args.seed)
-        fault_tree.to_FTREX(printer, args.nest)
+        fault_tree.to_FTREX_NAME(printer, args.nest)
     else:
         write_info(fault_tree, printer, args.seed)
         write_summary(fault_tree, printer)
