@@ -23,6 +23,12 @@ setuptools.setup(
         'argparse',
         'ordered_set',
     ],
+    extras_require={
+        'dev': [
+            'pytest>=7.0.0',
+            'pytest-cov>=4.0.0',
+        ]
+    },
     entry_points={
         'console_scripts': [
             'fault-tree-generator=fault_tree_generator:main',

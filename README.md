@@ -10,8 +10,11 @@ A python utility for parametrically creating and exporting synthetic fault trees
 - [Features](#features)
 - [Performance](#performance)
 - [Constraints](#constraints)
-- [Contributing](#contributing)
-- [Code of Conduct](#code-of-conduct)
+- [Testing](#testing)
+  - [Running Tests](#running-tests)
+  - [Test Coverage](#test-coverage)
+  - [Continuous Integration](#continuous-integration)
+  - [Adding New Tests](#adding-new-tests)
 - [License](#license)
 - [Acknowledgments](#acknowledgments)
 
@@ -70,7 +73,8 @@ To generate a fault tree with default settings, simply run:
 fault-tree-generator
 ```
 
-For a more customized fault tree, you can use the command-line arguments to specify various options. Here are a few examples:
+For a more customized fault tree, you can use the command-line arguments to specify various options. Here are a few 
+examples:
 
 To specify a name for the fault tree and the root gate, and to write the output to a file:
 
@@ -116,6 +120,57 @@ Where:
 When generating a fault tree with both the number of basic events and the number of gates constrained, other user-set 
 factors may be affected. However, if the number of gates is not constrained by the user, all other user-defined factors
 are preserved and utilized as specified.
+
+## Testing
+
+To ensure the reliability and stability of the Fault Tree Generator, a suite of tests has been provided. These tests 
+cover the core functionality of the package, including the generation of fault trees, event handling, and probability 
+calculations.
+
+### Running Tests
+
+To run the tests, you will need to have `pytest` installed. If you have not already installed the development 
+dependencies, you can do so by running:
+
+```bash
+pip install -e '.[dev]'
+```
+
+Once you have the necessary dependencies, you can run the tests using the following command:
+
+```bash
+pytest
+```
+
+### Test Coverage
+
+To measure the test coverage of the Fault Tree Generator, we use the `pytest-cov` plugin. This tool allows us to 
+generate reports that show which parts of the code are covered by tests and which are not, helping to identify areas 
+that may need additional testing.
+
+To run the tests with coverage reporting, use the following command:
+
+```bash
+pytest --cov=fault_tree --cov-report term-missing
+```
+
+This will output the coverage report to the terminal, including information on any lines of code that are missing 
+coverage. For a more detailed HTML report that you can view in a web browser, use:
+
+```bash
+pytest --cov=fault_tree --cov-report html
+```
+
+The HTML report will be saved in a directory named `htmlcov`. Open `htmlcov/index.html` in your web browser to view it.
+### Continuous Integration
+
+Continuous integration is set up to run tests automatically on every push and pull request. This ensures that new 
+changes do not break existing functionality.
+
+### Adding New Tests
+
+Contributors are encouraged to add tests for new features or to improve existing tests. When contributing new code, 
+please include tests that cover the new functionality and ensure that all tests pass before submitting a pull request.
 
 ## License
 

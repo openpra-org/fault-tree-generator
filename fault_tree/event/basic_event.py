@@ -1,31 +1,51 @@
-from fault_tree.event.Event import Event
-from generator.probability import Probability
+from typing import Optional
+
+from fault_tree.event import Event
+from fault_tree.probability import Probability
 
 
 class BasicEvent(Event):
     """Representation of a basic event in a fault tree.
 
+    A basic event is a leaf node in the fault tree, representing a failure mode
+    that does not depend on any other events. It is characterized by its own
+    probability of occurrence.
+
     Attributes:
-        name:  Identifier of the node.
-        probability: Probability of failure of this basic event.
+        name (str): Identifier of the basic event.
+        probability (Optional[Probability]): Probability of failure of this basic event.
     """
 
-    def __init__(self, name: str, probability: Probability):
-        """Initializes a basic event node.
+    def __init__(self, name: str, probability: Optional[Probability]):
+        """Initializes a BasicEvent with a name and a probability of failure.
+
+        Inherits from the Event class and adds a probability attribute specific
+        to basic events.
 
         Args:
-            name: Identifier of the node.
-            probability: Probability of failure of this basic event.
+            name (str): Identifier of the basic event.
+            probability (Probability): An instance of Probability representing
+                the likelihood of the basic event's failure.
         """
-        super(BasicEvent, self).__init__(name)
+        super().__init__(name)
         self.__probability = probability
 
-    def to_xml(self, printer):
-        """Produces the Open-PSA MEF XML definition of the basic event."""
-        printer('<define-basic-event name="', self.name, '">')
-        self.__probability.to_xml(printer)
-        printer('</define-basic-event>')
+    @property
+    def probability(self) -> Probability:
+        """Gets the probability of failure of the basic event.
 
-    def to_aralia(self, printer):
-        """Produces the Aralia definition of the basic event."""
-        raise NotImplementedError
+        Returns:
+            Probability: The probability of failure of this basic event.
+        """
+        return self.__probability
+
+    @probability.setter
+    def probability(self, value: Probability):
+        """Sets the probability of failure of the basic event.
+
+        Args:
+            value (Probability): The new probability of failure to be set.
+        """
+        if not isinstance(value, Probability) and value is not None:
+            raise TypeError("probability must be an instance of Probability or None")
+        self.__probability = value

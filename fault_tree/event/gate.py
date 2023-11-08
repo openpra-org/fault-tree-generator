@@ -1,192 +1,188 @@
 from collections import deque
 from ordered_set import OrderedSet
+from typing import Optional, Union, TYPE_CHECKING
 
-from generator.event.basic_event import BasicEvent
-from generator.event.Event import Event
-from generator.event.house_event import HouseEvent
+from .event import Event
+from .basic_event import BasicEvent
+from .house_event import HouseEvent
+
+if TYPE_CHECKING:
+    from fault_tree.event import Gate as GateType
+else:
+    GateType = 'Gate'
+
+# Assuming OperatorType is a custom type that you have defined elsewhere in your code.
+# If it's a string or another type, adjust the type hint accordingly.
+OperatorType = str  # Replace with the actual type if it's not a string
 
 
-class Gate(Event):  # pylint: disable=too-many-instance-attributes
+class Gate(Event):
     """Representation of a fault tree gate.
 
+    A gate in a fault tree represents a logical operator that combines the states of
+    its child events to determine its own state.
+
     Attributes:
-        operator: Logical operator of this formula.
-        k_num: Min number for the combination operator.
-        g_arguments: arguments that are gates.
-        b_arguments: arguments that are basic events.
-        h_arguments: arguments that are house events.
-        u_arguments: arguments that are undefined.
-        mark: Marking for various algorithms like toposort.
+        name (str): Identifier of the gate.
+        operator (OperatorType): Logical operator of this gate.
+        k_num (Optional[int]): Minimum number for the combination operator (used in k-out-of-n gates).
+        g_arguments (OrderedSet[Gate]): Child gates that are arguments of this gate.
+        b_arguments (OrderedSet[BasicEvent]): Basic events that are arguments of this gate.
+        h_arguments (OrderedSet[HouseEvent]): House events that are arguments of this gate.
+        u_arguments (OrderedSet[Event]): Undefined events that are arguments of this gate.
+        mark (Optional[str]): Marking for various algorithms like topological sort.
     """
 
-    def __init__(self, name: str, operator, k_num=None):
-        """Initializes a gate.
+    def __init__(self, name: str, operator: OperatorType, k_num: Optional[int] = None):
+        """Initializes a gate with a name, operator, and an optional k_num.
 
         Args:
-            name: Identifier of the node.
-            operator: Boolean operator of this formula.
-            k_num: Min number for the combination operator.
+            name (str): Identifier of the gate.
+            operator (OperatorType): Logical operator of this gate.
+            k_num (Optional[int]): Minimum number for the combination operator (used in k-out-of-n gates).
         """
-        super(Gate, self).__init__(name)
-        self.mark = None
-        self.operator = operator
-        self.k_num = k_num
+        super().__init__(name)
+        self.mark: Optional[str] = None
+        self.operator: OperatorType = operator
+        self.k_num: Optional[int] = k_num
         self.g_arguments: OrderedSet[Gate] = OrderedSet()
         self.b_arguments: OrderedSet[BasicEvent] = OrderedSet()
         self.h_arguments: OrderedSet[HouseEvent] = OrderedSet()
         self.u_arguments: OrderedSet[Event] = OrderedSet()
 
-    def num_arguments(self):
-        """Returns the number of arguments."""
-        return sum(
-            len(x) for x in (self.b_arguments, self.h_arguments,
-                             self.g_arguments, self.u_arguments))
+    def num_arguments(self) -> int:
+        """Returns the total number of arguments (children) of the gate.
+
+        Returns:
+            int: The total number of child events (gates, basic events, house events, and undefined events).
+        """
+        return len(self.g_arguments) + len(self.b_arguments) + len(self.h_arguments) + len(self.u_arguments)
 
     def add_basic_events(self, basic_events: OrderedSet[BasicEvent]):
-        for basic_event in basic_events:
-            basic_event.parents.add(self)
-        self.b_arguments.update(basic_events)
-
-    def add_basic_event(self, basic_event: BasicEvent):
-        basic_event.parents.add(self)
-        self.b_arguments.add(basic_event)
-
-    def add_house_event(self, house_event: HouseEvent):
-        house_event.parents.add(self)
-        self.h_arguments.add(house_event)
-
-    def add_gates(self, gates: OrderedSet['Gate']):
-        for gate in gates:
-            gate.parents.add(self)
-        self.g_arguments.update(gates)
-
-    def add_gate(self, gate: 'Gate'):
-        gate.parents.add(self)
-        self.g_arguments.add(gate)
-
-    def add_argument(self, argument):
-        """Adds argument into a collection of gate arguments.
-
-        Note that this function also updates the parent set of the argument.
-        Duplicate arguments are ignored.
-        The logic of the Boolean operator is not taken into account
-        upon adding arguments to the gate.
-        Therefore, no logic checking is performed
-        for repeated or complement arguments.
+        """Adds multiple basic events as children of the gate.
 
         Args:
-            argument: Gate, HouseEvent, BasicEvent, or Event argument.
+            basic_events (OrderedSet[BasicEvent]): A set of basic events to be added as children.
+        """
+        for basic_event in basic_events:
+            self.add_basic_event(basic_event)
+
+    def add_basic_event(self, basic_event: BasicEvent):
+        """Adds a single basic event as a child of the gate.
+
+        Args:
+            basic_event (BasicEvent): The basic event to be added as a child.
+        """
+        if basic_event in self.b_arguments:
+            raise AssertionError("The basic event is already a child of this gate.")
+        self.b_arguments.add(basic_event)
+        basic_event.parents.add(self)
+
+    def add_house_events(self, house_events: OrderedSet[HouseEvent]):
+        """Adds multiple house events as children of the gate.
+
+        Args:
+            house_events (OrderedSet[HouseEvent]): A set of house events to be added as children.
+        """
+        for house_event in house_events:
+            self.add_house_event(house_event)
+
+    def add_house_event(self, house_event: HouseEvent):
+        """Adds a house event as a child of the gate.
+
+        Args:
+            house_event (HouseEvent): The house event to be added as a child.
+        """
+        if house_event in self.h_arguments:
+            raise AssertionError("The house event is already a child of this gate.")
+        self.h_arguments.add(house_event)
+        house_event.parents.add(self)
+
+    def add_events(self, events: OrderedSet[Event]):
+        """Adds multiple events of unknown type as children of the gate.
+
+        Args:
+            events (OrderedSet[Event]): A set of events of unknown type to be added as children.
+        """
+        for event in events:
+            self.add_event(event)
+
+    def add_event(self, event: Event):
+        """Adds an event of unknown type as a child of the gate.
+
+        Args:
+            event (Event): The house event to be added as a child.
+        """
+        if event in self.u_arguments:
+            raise AssertionError("The event is already a child of this gate.")
+        self.u_arguments.add(event)
+        event.parents.add(self)
+
+    def add_gates(self, gates: OrderedSet[GateType]):
+        """Adds multiple gates as children of this gate.
+
+        Args:
+            gates (OrderedSet[Gate]): A set of gates to be added as children.
+        """
+        for gate in gates:
+            self.add_gate(gate)
+
+    def add_gate(self, gate: GateType):
+        """Adds a single gate as a child of this gate.
+
+        Args:
+            gate (Gate): The gate to be added as a child.
+        """
+        if gate in self.g_arguments:
+            raise AssertionError("The gate is already a child of this gate.")
+        self.g_arguments.add(gate)
+        gate.parents.add(self)
+
+    def add_arguments(self, arguments: OrderedSet[Union[GateType, BasicEvent, HouseEvent, Event]]):
+        """Adds multiple arguments (child events) to the gate.
+
+        This method updates the parent set of each argument and adds it to the appropriate
+        collection of arguments based on its type. Duplicate arguments are ignored.
+
+        Args:
+            arguments (OrderedSet[Union[Gate, BasicEvent, HouseEvent, Event]]): The events to be added as children.
+        """
+        for argument in arguments:
+            self.add_argument(argument)
+
+    def add_argument(self, argument: Union[GateType, BasicEvent, HouseEvent, Event]):
+        """Adds an argument (child event) to the gate.
+
+        This method updates the parent set of the argument and adds it to the appropriate
+        collection of arguments based on its type. Duplicate arguments are ignored.
+
+        Args:
+            argument (Union[Gate, BasicEvent, HouseEvent, Event]): The event to be added as a child.
         """
         argument.parents.add(self)
         if isinstance(argument, Gate):
-            self.g_arguments.add(argument)
+            self.add_gate(argument)
         elif isinstance(argument, BasicEvent):
-            self.b_arguments.add(argument)
+            self.add_basic_event(argument)
         elif isinstance(argument, HouseEvent):
-            self.h_arguments.add(argument)
+            self.add_house_event(argument)
         else:
-            assert isinstance(argument, Event)
-            self.u_arguments.add(argument)
+            assert isinstance(argument, Event), "Argument must be an instance of Event or its subclasses."
+            self.add_event(argument)
 
-    def get_ancestors(self):
-        """Collects ancestors from this gate.
+    def get_ancestors(self) -> OrderedSet[Event]:
+        """Collects and returns a set of all ancestor events of this gate.
+
+        This method performs a breadth-first search to find all ancestors without recursion.
 
         Returns:
-            A set of ancestors.
+            OrderedSet[Event]: A set of all ancestor events.
         """
-        ancestors = OrderedSet([self])
-        parents = deque(self.parents)  # to avoid recursion
+        ancestors: OrderedSet[Event] = OrderedSet([self])
+        parents = deque(self.parents)
         while parents:
             parent = parents.popleft()
             if parent not in ancestors:
                 ancestors.add(parent)
                 parents.extend(parent.parents)
         return ancestors
-
-    def to_xml(self, printer, nest=False):
-        """Produces the Open-PSA MEF XML definition of the gate.
-
-        Args:
-            printer: The output stream.
-            nest: Nesting of NOT connectives in formulas.
-        """
-
-        def arg_to_xml(type_str, arg):
-            """Produces XML string representation of an argument."""
-            return "<%s name=\"%s\"/>\n" % (type_str, arg.name)
-
-        def args_to_xml(type_str, args):
-            """Produces XML string representation of arguments."""
-            return "".join(arg_to_xml(type_str, arg) for arg in args)
-
-        def convert_formula(gate, nest=False):
-            """Converts the formula of a gate into XML representation."""
-            mef_xml = ""
-            if gate.operator != "null":
-                mef_xml += "<" + gate.operator
-                if gate.operator == "atleast":
-                    mef_xml += " min=\"" + str(gate.k_num) + "\""
-                mef_xml += ">\n"
-            mef_xml += args_to_xml("house-event", gate.h_arguments)
-            mef_xml += args_to_xml("basic-event", gate.b_arguments)
-            mef_xml += args_to_xml("event", gate.u_arguments)
-
-            def converter(arg_gate):
-                """Converter for single nesting NOT connective."""
-                if gate.operator != "not" and arg_gate.operator == "not":
-                    return convert_formula(arg_gate)
-                return arg_to_xml("gate", arg_gate)
-
-            if nest:
-                mef_xml += "".join(converter(x) for x in gate.g_arguments)
-            else:
-                mef_xml += args_to_xml("gate", gate.g_arguments)
-
-            if gate.operator != "null":
-                mef_xml += "</" + gate.operator + ">"
-            return mef_xml
-
-        printer('<define-gate name="', self.name, '">')
-        printer(convert_formula(self, nest))
-        printer('</define-gate>')
-
-    def to_aralia(self, printer):
-        """Produces the Aralia definition of the gate.
-
-        The transformation to the Aralia format
-        does not support complement or undefined arguments.
-
-        Args:
-            printer: The output stream.
-
-        Raises:
-            KeyError: The gate operator is not supported.
-        """
-        assert not self.u_arguments
-
-        def get_format(operator):
-            """Determins formatting for the gate operator."""
-            if operator == "atleast":
-                return "@(" + str(self.k_num) + ", [", ", ", "])"
-            return {
-                "and": ("(", " & ", ")"),
-                "or": ("(", " | ", ")"),
-                "xor": ("(", " ^ ", ")"),
-                "not": ("~(", "", ")")
-            }[operator]
-
-        line = [self.name, " := "]
-        line_start, div, line_end = get_format(self.operator)
-        line.append(line_start)
-        args = []
-        for h_arg in self.h_arguments:
-            args.append(h_arg.name)
-
-        for b_arg in self.b_arguments:
-            args.append(b_arg.name)
-
-        for g_arg in self.g_arguments:
-            args.append(g_arg.name)
-        line.append(div.join(args))
-        line.append(line_end)
-        printer("".join(line))

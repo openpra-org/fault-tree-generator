@@ -1,33 +1,31 @@
-from generator.probability.Probability import Probability
+from fault_tree.probability import Probability
 
 
 class PointEstimate(Probability):
-    """
-        The PointEstimate class is a subclass of the Probability abstract class.
-        This class represents the probability of a particular event given only a
-        single value.
-        Args:
-            value: A float value between 0.0 and 1.0 inclusive.
+    """Represents a point estimate probability.
 
-        Attributes:
-            value: The float value that was passed in.
+    This class is a concrete implementation of the Probability abstract class,
+    representing a probability as a single fixed value, known as a point estimate.
+
+    Attributes:
+        value (float): The numerical value representing the probability, which must
+            be between 0.0 and 1.0 inclusive.
+
+    Raises:
+        ValueError: If the value is not within the range [0.0, 1.0].
+    """
+
+    def __init__(self, value: float):
+        """Initializes a PointEstimate with a given probability value.
+
+        Args:
+            value (float): The numerical value representing the probability, which must
+                be between 0.0 and 1.0 inclusive.
 
         Raises:
-            ValueError: If the value is not between 0.0 and 1.0 inclusive.
-    """
-    def __init__(self, value: any):
-
-        if value > 1.0 or value < 0:
-            raise ValueError('Point estimate value cannot be outside domain [0, 1]')
+            ValueError: If the value is not within the range [0.0, 1.0].
+        """
+        if not 0.0 <= value <= 1.0:
+            raise ValueError('Point estimate value must be within the domain [0, 1].')
 
         super().__init__(value)
-
-    def to_openpra_json(self, printer):
-        pass
-
-    def to_aralia(self, printer):
-        pass
-
-    def to_xml(self, printer):
-        """Produces the Open-PSA MEF XML definition of a point estimate."""
-        printer('<float value="', self.value, '"/>')

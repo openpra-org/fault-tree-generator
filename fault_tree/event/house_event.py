@@ -1,29 +1,42 @@
-from generator.event.Event import Event
+from fault_tree.event import Event
+from typing import Literal, Optional
 
 
 class HouseEvent(Event):
     """Representation of a house event in a fault tree.
 
+    A house event is a special type of event that has a fixed state and does not depend on other events.
+
     Attributes:
-        state: State of the house event ("true" or "false").
+        name (str): A specific name that identifies this house event.
+        state (Literal['true', 'false', True, False]): The state of the house event, which can be either "true" or
+        "false".
     """
 
-    def __init__(self, name, state):
-        """Initializes a house event node.
+    VALID_STATES = {'true', 'false', True, False}
+
+    def __init__(self, name: str, state: Optional[Literal['true', 'false', True, False]]):
+        """Initializes a HouseEvent with a unique name and a fixed state.
 
         Args:
-            name: Identifier of the node.
-            state: Boolean state string of the constant.
+            name (str): Identifier for the house event.
+            state (Literal['true', 'false', True, False]): Boolean state string of the constant, either "true" or "false".
         """
-        super(HouseEvent, self).__init__(name)
-        self.state = state
+        if state and state not in self.VALID_STATES:
+            raise ValueError(f"Invalid state: {state}. Valid states are: {self.VALID_STATES}")
+        super().__init__(name)
+        if state is None:
+            self.state: Literal['true', 'false'] = "false"
+        else:
+            self.state: Literal['true', 'false'] = state
 
-    def to_xml(self, printer):
-        """Produces the Open-PSA MEF XML definition of the house event."""
-        printer('<define-house-event name="', self.name, '">')
-        printer('<constant value="', str(self.state).lower(), '"/>')
-        printer('</define-house-event>')
+    @property
+    def state(self) -> Literal['true', 'false']:
+        return self._state
 
-    def to_aralia(self, printer):
-        """Produces the Aralia definition of the house event."""
-        printer('s(', self.name, ') = ', str(self.state).lower())
+    @state.setter
+    def state(self, value: Literal['true', 'false']):
+        if value not in self.VALID_STATES:
+            raise ValueError(f"Invalid state: {value}. Valid states are: {self.VALID_STATES}")
+        self._state = value
+
