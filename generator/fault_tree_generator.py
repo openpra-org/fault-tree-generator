@@ -32,7 +32,7 @@ Where N is the number of basic events,
 and Ratio is N / num_gate.
 
 Note that generating a fault tree
-with both the number of basic events and the number of gates contstrained
+with both the number of basic events and the number of gates constrained
 may change other factors that are set by the user.
 However, if the number of gates are not set (constrained) by the user,
 all the other factors set by the user are
@@ -841,7 +841,7 @@ def manage_cmd_args(argv=None):
         ArgumentTypeError: There are problems with the arguments.
     """
     # #lizard forgives the function length
-    parser = ap.ArgumentParser(description="Complex-Fault-Tree Generator",
+    parser = ap.ArgumentParser(description="Fault-Tree Generator",
                                formatter_class=ap.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--ft-name",
                         type=str,

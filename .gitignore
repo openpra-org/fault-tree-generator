@@ -49,3 +49,10 @@ outputs/
 docs/_build
 docs/_static
 docs/_templates
+
+.pytest_cache
+build
+dist
+fault_tree_generator.egg-info
+outputs
+docs

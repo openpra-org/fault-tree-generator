@@ -7,17 +7,25 @@ setuptools.setup(
     name="fault-tree-generator",
     version="0.0.1",
     author="Arjun Earthperson",
-    author_email="aarjun@ncsu.edu",
+    author_email="mail@earthperson.org",
     description="Utility for creating synthetic fault trees",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="gitlab.openpra.org/publics/fault-tree-generator",
+    url='https://github.com/arjun372/fault-tree-generator',
     packages=setuptools.find_packages(),
-    include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
     ],
-    install_requires=['argparse', 'setuptools'],
-    test_suite='nose.collector',
-    tests_require=['nose', 'typing', 'argparse', 'coverage', 'lxml', 'pytest'],
+    python_requires='>=3.6',
+    install_requires=[
+        'argparse',
+        'ordered_set',
+    ],
+    entry_points={
+        'console_scripts': [
+            'fault-tree-generator=fault_tree_generator:main',
+        ],
+    },
 )
