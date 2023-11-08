@@ -1,6 +1,6 @@
 from collections import deque
 from ordered_set import OrderedSet
-from typing import Optional, Union, TYPE_CHECKING
+from typing import Optional, Union, TYPE_CHECKING, Set
 
 from .event import Event
 from .basic_event import BasicEvent
@@ -187,7 +187,7 @@ class Gate(Event):
                 parents.extend(parent.parents)
         return ancestors
 
-    def __str__(self):
+    def expr(self):
         """Returns the symbolic boolean expression string for the gate.
 
         The string is built using symbols for logical operations:
@@ -198,16 +198,19 @@ class Gate(Event):
         """
         # Helper function to format the arguments of the gate
         def format_arguments(arguments):
-            return [str(arg) for arg in arguments]
+            return [arg.expr() for arg in arguments]
 
         # Format the arguments for basic events, house events, and child gates
         b_args = format_arguments(self.b_arguments)
         h_args = format_arguments(self.h_arguments)
-        g_args = format_arguments(self.g_arguments)
         u_args = format_arguments(self.u_arguments)
+        g_args = format_arguments(self.g_arguments)
 
         # Combine all arguments into a single list
-        all_args = b_args + h_args + g_args + u_args
+        all_args = b_args + h_args + u_args + g_args
+
+        if not all_args:
+            return f"{self.name}"
 
         # Build the expression based on the gate operator
         if self.operator == "and":
@@ -226,3 +229,43 @@ class Gate(Event):
             return f"atleast_{self.k_num}(" + ','.join(all_args) + ')'
         else:
             raise ValueError(f"Unknown gate operator: {self.operator}")
+
+    # def __str__(self):
+    #     """Returns the symbolic boolean expression string for the gate.
+    #
+    #     The string is built using symbols for logical operations:
+    #     '+' for OR, '*' for AND, and "'" for NOT.
+    #
+    #     Returns:
+    #         str: The symbolic boolean expression representing the gate.
+    #     """
+    #     # Helper function to format the arguments of the gate
+    #     def format_arguments(arguments):
+    #         return [str(arg) for arg in arguments]
+    #
+    #     # Format the arguments for basic events, house events, and child gates
+    #     b_args = format_arguments(self.b_arguments)
+    #     h_args = format_arguments(self.h_arguments)
+    #     g_args = format_arguments(self.g_arguments)
+    #     u_args = format_arguments(self.u_arguments)
+    #
+    #     # Combine all arguments into a single list
+    #     all_args = b_args + h_args + g_args + u_args
+    #
+    #     # Build the expression based on the gate operator
+    #     if self.operator == "and":
+    #         return '(' + '*'.join(all_args) + ')'
+    #     elif self.operator == "or":
+    #         return '(' + '+'.join(all_args) + ')'
+    #     elif self.operator == "not":
+    #         # NOT gates should only have one argument
+    #         return all_args[0] + "'"
+    #     elif self.operator == "xor":
+    #         # XOR is represented as a ^ b
+    #         # For more than two arguments, XOR is associative: a ^ b ^ c
+    #         return '(' + '^'.join(all_args) + ')'
+    #     elif self.operator == "atleast":
+    #         # For k-out-of-n gates, we will use a special notation: atleast_k(args)
+    #         return f"atleast_{self.k_num}(" + ','.join(all_args) + ')'
+    #     else:
+    #         raise ValueError(f"Unknown gate operator: {self.operator}")

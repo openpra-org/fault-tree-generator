@@ -1,5 +1,5 @@
-import json
-from typing import Optional, Dict, Any
+from collections import deque
+from typing import Optional, Dict, Any, Deque
 from ordered_set import OrderedSet
 
 from fault_tree.event import BasicEvent, HouseEvent, Gate
@@ -119,7 +119,7 @@ class FaultTree:
         self.ccf_groups = state['ccf_groups']
         self.non_ccf_events = state['non_ccf_events']
 
-    def __str__(self):
+    def expr(self):
         """Returns the boolean expression string for the fault tree.
 
         The string is evaluated by recursively traversing the tree,
@@ -128,26 +128,77 @@ class FaultTree:
         Returns:
             str: The boolean expression representing the fault tree.
         """
-        if self.top_gate is None:
+
+        sorted_gates = FaultTree.toposort_gates(self.top_gates or [self.top_gate], self.gates)
+
+        if not sorted_gates:
             return ""
 
-        def recursive_str(gate):
-            """Recursively builds the boolean expression for a gate.
+        for gate in sorted_gates:
+            return gate.expr()
+
+        # def recursive_str(event):
+        #     """Recursively builds the boolean expression for an event.
+        #
+        #     Args:
+        #         event (Event): The event to build the expression for.
+        #
+        #     Returns:
+        #         str: The boolean expression for the event.
+        #     """
+        #     if isinstance(event, BasicEvent):
+        #         return gate.name
+        #     elif isinstance(gate, HouseEvent):
+        #         return gate.name
+        #     elif isinstance(gate, Gate):
+        #         # Assuming Gate class has a __str__ method
+        #         return gate.expr()
+        #     else:
+        #         raise TypeError("Unknown event type in fault tree")
+        #
+        # return recursive_str(self.top_gate)
+
+    @staticmethod
+    def toposort_gates(root_gates: OrderedSet[Gate], gates: OrderedSet[Gate]) -> Deque:
+        """Sorts gates topologically starting from the root gate.
+
+        The gate marks are used for the algorithm.
+        After this sorting the marks are reset to None.
+
+        Args:
+            root_gates: The root gates of the graph.
+            gates: Gates to be sorted.
+
+        Returns:
+            A deque of sorted gates.
+        """
+
+        for uninitialized_gate in gates:
+            uninitialized_gate.mark = ""
+
+        def visit(current_gate, final_list):
+            """Recursively visits the given gate subtree to include into the list.
 
             Args:
-                gate (Gate): The gate to build the expression for.
-
-            Returns:
-                str: The boolean expression for the gate.
+                current_gate: The current gate.
+                final_list: A deque of sorted gates.
             """
-            if isinstance(gate, BasicEvent):
-                return gate.name
-            elif isinstance(gate, HouseEvent):
-                return gate.name + "=" + str(gate.state).lower()
-            elif isinstance(gate, Gate):
-                # Assuming Gate class has a __str__ method
-                return str(gate)
-            else:
-                raise TypeError("Unknown event type in fault tree")
+            assert current_gate.mark != "temp"
+            if not current_gate.mark:
+                current_gate.mark = "temp"
+                for arg in current_gate.g_arguments:
+                    visit(arg, final_list)
+                current_gate.mark = "perm"
+                final_list.appendleft(current_gate)
 
-        return recursive_str(self.top_gate)
+        sorted_gates = deque()
+
+        for root_gate in root_gates:
+            visit(root_gate, sorted_gates)
+
+        assert len(sorted_gates) == len(gates)
+
+        for gate in gates:
+            gate.mark = None
+
+        return sorted_gates

@@ -257,6 +257,8 @@ class ComplexityFactors:
             gate.k_num = random.randint(2, num_args - 1)
             return num_args
 
+        # Ensure max_args is greater than the minimum value of 2
+        max_args = max(max_args, 3)
         return random.randint(2, max_args)
 
     def get_percent_gate(self):

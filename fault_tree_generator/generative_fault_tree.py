@@ -60,7 +60,7 @@ class GenerativeFaultTree(FaultTree):
         """
         assert not self.top_gate and not self.top_gates
         operator = self.factors.get_random_operator()
-        while operator in ("xor", "not"):
+        while operator in ("atleast", "not"):
             operator = self.factors.get_random_operator()
         self.top_gate = Gate(root_name, operator)
         self.gates.append(self.top_gate)
@@ -127,55 +127,69 @@ class GenerativeFaultTree(FaultTree):
             common_basic: A list of common basic events.
             common_gate: A list of common gates.
         """
-        # Get an intermediate gate to initialize breadth-first
-        gate = gates_queue.popleft()
+        while gates_queue:
+            # Get an intermediate gate to initialize breadth-first
+            gate = gates_queue.popleft()
 
-        num_arguments = self.factors.get_num_args(gate)
+            if gate.operator == "not":
+                # "not" gates should have exactly one argument
+                if gate.num_arguments() == 0:
+                    gate.add_argument(self.choose_basic_event(random.random(), common_basic))
+                continue  # Skip the rest of the loop for "not" gates
 
-        ancestors = None  # needed for cycle prevention
-        max_tries = len(common_gate)  # the number of maximum tries
-        num_tries = 0  # the number of tries to get a common gate
 
-        # pylint: disable=too-many-nested-blocks
-        # This code is both hot and coupled for performance reasons.
-        # There may be a better solution than the current approach.
-        while gate.num_arguments() < num_arguments:
-            s_percent = random.random()  # sample percentage of gates
-            s_common = random.random()  # sample the reuse frequency
 
-            # Case when the number of basic events is already satisfied
-            if len(self.basic_events) == self.factors.num_basic:
-                s_common = 0  # use only common nodes
 
-            if s_percent < self.factors.get_percent_gate():
-                # Create a new gate or use a common one
-                if s_common < self.factors.common_g and num_tries < max_tries:
-                    # Lazy evaluation of ancestors
-                    if not ancestors:
-                        ancestors = gate.get_ancestors()
 
-                    for random_gate in GenerativeFaultTree.candidate_gates(common_gate):
-                        num_tries += 1
-                        if num_tries >= max_tries:
-                            break
-                        if random_gate in gate.g_arguments or random_gate is gate:
-                            continue
-                        if (not random_gate.g_arguments or
-                                random_gate not in ancestors):
-                            if not random_gate.parents:
-                                gates_queue.append(random_gate)
-                            gate.add_argument(random_gate)
-                            break
+            max_tries = len(common_gate)  # the number of maximum tries
+            num_tries = 0  # the number of tries to get a common gate
+
+            ancestors = None
+
+            num_arguments = self.factors.get_num_args(gate)
+            while gate.num_arguments() < num_arguments:
+
+                s_percent = random.random()  # sample percentage of gates
+                s_common = random.random()  # sample the reuse frequency
+
+                # Case when the number of basic events is already satisfied
+                if len(self.basic_events) >= self.factors.num_basic:
+                    s_common = 1  # use only common nodes
+
+                if s_percent < self.factors.get_percent_gate():
+                    # Create a new gate or use a common one
+                    if s_common < self.factors.common_g:
+                        # Lazy evaluation of ancestors
+                        if not ancestors:
+                            ancestors = gate.get_ancestors()
+
+                        for random_gate in GenerativeFaultTree.candidate_gates(common_gate):
+                            # if (random_gate is gate) or (random_gate in gate.g_arguments):
+                            #     continue
+                            #
+                            # if not random_gate.g_arguments or random_gate not in ancestors:
+                            #     if not random_gate.parents:
+                            #         gates_queue.append(random_gate)
+                            #     gate.add_argument(random_gate)
+                            #     break
+                            if (random_gate is not gate) and (random_gate not in gate.g_arguments) and (random_gate not in ancestors):
+                                if not random_gate.parents:
+                                    gates_queue.append(random_gate)
+                                gate.add_argument(random_gate)
+                                break
+                    else:
+                        new_gate = self.construct_gate()
+                        gate.add_argument(new_gate)
+                        gates_queue.append(new_gate)
                 else:
-                    new_gate = self.construct_gate()
-                    gate.add_argument(new_gate)
-                    gates_queue.append(new_gate)
-            else:
-                # Choose a basic event that is not already a child of the gate
-                basic_event = self.choose_basic_event(s_common, common_basic)
-                if basic_event not in gate.b_arguments:
-                    gate.add_argument(basic_event)
-                # gate.add_argument(self.choose_basic_event(s_common, common_basic))
+                    # Choose a basic event that is not already a child of the gate
+                    basic_event = self.choose_basic_event(s_common, common_basic)
+                    if basic_event not in gate.b_arguments:
+                        gate.add_argument(basic_event)
+
+            # If the number of basic events has reached the desired count, exit the loop
+            if len(self.basic_events) >= self.factors.num_basic and not gates_queue:
+                break
 
         self.correct_for_exhaustion(gates_queue, common_gate)
 

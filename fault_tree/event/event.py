@@ -37,6 +37,14 @@ class Event:
         """
         return self.name if self.name is not None else ''
 
+    def expr(self) -> str:
+        """Returns the boolean expression string for this event
+
+        Returns:
+            str: The name of the event.
+        """
+        return str(self)
+
     def __hash__(self) -> int:
         """Returns the hash of the event.
 
