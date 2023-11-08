@@ -1,108 +1,98 @@
-# Copyright (C) 2014-2018 Olzhas Rakhimov
-#
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""Fault tree classes and common facilities."""
+import json
+from typing import Optional, Dict, Any
+from ordered_set import OrderedSet
 
-# from ordered_set import OrderedSet
-
-from collections import deque
-
-from event.basic_event import BasicEvent
-from event.gate import Gate
-from event.house_event import HouseEvent
+from fault_tree.event import BasicEvent, HouseEvent, Gate
+from fault_tree import CCFGroup
 
 
-class CcfGroup:  # pylint: disable=too-few-public-methods
-    """Representation of CCF groups in a fault tree.
+class FaultTree:
+    """Represents a fault tree for reliability and safety analysis.
+
+    A fault tree is a graphical representation of the logical relationships between
+    various subsystems and events within a system that can lead to a particular
+    top-level failure event.
 
     Attributes:
-        name: The name of an instance CCF group.
-        members: A collection of members in a CCF group.
-        prob: Probability for a CCF group.
-        model: The CCF model chosen for a group.
-        factors: The factors of the CCF model.
+        name (Optional[str]): The name of the fault tree or the system it represents.
+        top_gate (Optional[Gate]): The top-level gate of the fault tree.
+        top_gates (Optional[OrderedSet[Gate]]): A set of top-level gates if multiple exist.
+        gates (OrderedSet[Gate]): A set of all gates within the fault tree.
+        basic_events (OrderedSet[BasicEvent]): A set of all basic events within the fault tree.
+        house_events (OrderedSet[HouseEvent]): A set of all house events within the fault tree.
+        ccf_groups (OrderedSet[CCFGroup]): A set of all CCF groups within the fault tree.
+        non_ccf_events (OrderedSet[BasicEvent]): A set of basic events not in any CCF group.
     """
 
-    def __init__(self, name):
-        """Constructs a unique CCF group with a unique name.
+    def __init__(self, name: Optional[str] = None):
+        """Initializes an empty fault tree with an optional name.
 
         Args:
-            name: Identifier for the group.
+            name (Optional[str]): The name of the system described by the fault tree.
         """
-        self.name = name
-        self.members = []
-        self.prob = None
-        self.model = None
-        self.factors = []
-
-    def to_xml(self, printer):
-        """Produces the Open-PSA MEF XML definition of the CCF group."""
-        printer('<define-CCF-group name="', self.name, '"', ' model="',
-                self.model, '">')
-        printer('<members>')
-        for member in self.members:
-            printer('<basic-event name="', member.name, '"/>')
-        printer('</members>')
-
-        printer('<distribution>')
-        printer('<float value="', self.prob, '"/>')
-        printer('</distribution>')
-
-        printer('<factors>')
-        assert self.model == "MGL"
-        assert self.factors
-        level = 2
-        for factor in self.factors:
-            printer('<factor level="', level, '">')
-            printer('<float value="', factor, '"/>')
-            printer('</factor>')
-            level += 1
-        printer('</factors>')
-
-        printer('</define-CCF-group>')
-
-
-class FaultTree(object):  # pylint: disable=too-many-instance-attributes
-    """Representation of a fault tree for general purposes.
-
-    Attributes:
-        name: The name of a fault tree.
-        top_gate: The root gate of the fault tree.
-        top_gates: Container of top gates. Single one is the default.
-        gates: A set of all gates that are created for the fault tree.
-        basic_events: A list of all basic events created for the fault tree.
-        house_events: A list of all house events created for the fault tree.
-        ccf_groups: A collection of created CCF groups.
-        non_ccf_events: A list of basic events that are not in CCF groups.
-    """
-
-    def __init__(self, name=None):
-        """Initializes an empty fault tree.
-
-        Args:
-            name: The name of the system described by the fault tree container.
-        """
-        self.name = name
-        self.top_gate = None
-        self.top_gates = None
+        self.name: Optional[str] = name
+        self.top_gate: Optional[Gate] = None
+        self.top_gates: Optional[OrderedSet[Gate]] = None
         self.gates: OrderedSet[Gate] = OrderedSet()
         self.basic_events: OrderedSet[BasicEvent] = OrderedSet()
         self.house_events: OrderedSet[HouseEvent] = OrderedSet()
-        self.ccf_groups: OrderedSet[CcfGroup] = OrderedSet()
-        self.non_ccf_events = OrderedSet()  # must be assigned directly.
+        self.ccf_groups: OrderedSet[CCFGroup] = OrderedSet()
+        self.non_ccf_events: OrderedSet[BasicEvent] = OrderedSet()
 
-    def __getstate__(self):
+    def add_gates(self, gates: OrderedSet[Gate], shallow: bool = False):
+        """Adds a collection of gates to the fault tree.
+
+        Args:
+            gates (OrderedSet[Gate]): A set of gates to be added to the fault tree.
+            shallow (bool): If True, only the specified gates are added without their descendants.
+                            If False, all descendants of the specified gates are also added.
+        """
+        self.gates.update(gates)
+        if not shallow:
+            for gate in gates:
+                self.basic_events.update(gate.b_arguments)
+                self.house_events.update(gate.h_arguments)
+                self.add_gates(gates=gate.g_arguments, shallow=False)
+
+    def prune(self, gate: Optional[Gate]) -> bool:
+        """Prunes a gate from the fault tree if it has only one argument.
+
+        If no gate is provided, the top gate of the fault tree is pruned.
+
+        This method is used to simplify the fault tree by removing gates that do not
+        contribute to the logical structure of the tree.
+
+        Args:
+            gate (Optional[Gate]): The gate to be pruned. Defaults to the top gate of the fault tree.
+
+        Returns:
+            bool: True if the gate was pruned, False otherwise.
+        """
+        if gate is None:
+            if self.top_gate is None:
+                raise ValueError("No gate was provided, and the top gate is not set, so there is nothing to prune.")
+            gate = self.top_gate
+        if gate.num_arguments() == 1:
+            if gate.num_parents() > 1:
+                raise ValueError(f'Unexpected number of parents for gate {gate.name}')
+            elif gate.num_parents() == 1:
+                parent: Gate = gate.parents.pop()
+                parent.g_arguments.discard(gate)
+                for arg_type in [gate.g_arguments, gate.b_arguments, gate.h_arguments, gate.u_arguments]:
+                    for arg in arg_type:
+                        parent.add_argument(arg)
+                self.gates.discard(gate)
+                for child_gate in gate.g_arguments:
+                    self.prune(child_gate)
+                return True
+        return False
+
+    def __getstate__(self) -> Dict[str, Any]:
+        """Retrieve the state of the FaultTree instance for pickling.
+
+        Returns:
+            Dict[str, Any]: The state of the instance as a dictionary.
+        """
         return {
             'name': self.name,
             'top_gate': self.top_gate,
@@ -114,139 +104,50 @@ class FaultTree(object):  # pylint: disable=too-many-instance-attributes
             'non_ccf_events': self.non_ccf_events,
         }
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: Dict[str, Any]):
+        """Sets the state of the FaultTree instance during unpickling.
+
+        Args:
+            state (Dict[str, Any]): The state of the instance as a dictionary.
+        """
         self.name = state['name']
         self.top_gate = state['top_gate']
         self.top_gates = state['top_gates']
-        self.gates: OrderedSet[Gate] = state['gates']
-        self.basic_events: OrderedSet[BasicEvent] = state['basic_events']
-        self.house_events: OrderedSet[HouseEvent] = state['house_events']
-        self.ccf_groups: OrderedSet[CcfGroup] = state['ccf_groups']
+        self.gates = state['gates']
+        self.basic_events = state['basic_events']
+        self.house_events = state['house_events']
+        self.ccf_groups = state['ccf_groups']
         self.non_ccf_events = state['non_ccf_events']
 
-    def to_xml(self, printer, nest=False):
-        """Produces the Open-PSA MEF XML definition of the fault tree.
+    def __str__(self):
+        """Returns the boolean expression string for the fault tree.
 
-        The fault tree is produced breadth-first.
-        The output XML representation is not formatted for human readability.
-        The fault tree must be valid and well-formed.
+        The string is evaluated by recursively traversing the tree,
+        starting from the top_gate.
 
-        Args:
-            printer: The output stream.
-            nest: A nesting factor for the Boolean formulae.
+        Returns:
+            str: The boolean expression representing the fault tree.
         """
-        printer('<opsa-mef>')
-        printer('<define-fault-tree name="', self.name, '">')
+        if self.top_gate is None:
+            return ""
 
-        for gate in self.gates:
-            gate.to_xml(printer, nest)
+        def recursive_str(gate):
+            """Recursively builds the boolean expression for a gate.
 
-        for ccf_group in self.ccf_groups:
-            ccf_group.to_xml(printer)
-        printer('</define-fault-tree>')
+            Args:
+                gate (Gate): The gate to build the expression for.
 
-        printer('<model-data>')
-        for basic_event in (self.non_ccf_events if self.ccf_groups else self.basic_events):
-            basic_event.to_xml(printer)
+            Returns:
+                str: The boolean expression for the gate.
+            """
+            if isinstance(gate, BasicEvent):
+                return gate.name
+            elif isinstance(gate, HouseEvent):
+                return gate.name + "=" + str(gate.state).lower()
+            elif isinstance(gate, Gate):
+                # Assuming Gate class has a __str__ method
+                return str(gate)
+            else:
+                raise TypeError("Unknown event type in fault tree")
 
-        for house_event in self.house_events:
-            house_event.to_xml(printer)
-        printer('</model-data>')
-        printer('</opsa-mef>')
-
-    def add_gates(self, gates: OrderedSet[Gate], shallow=False):
-        self.gates.update(gates)
-        if not shallow:
-            for gate in gates:
-                self.basic_events.update(gate.b_arguments)
-                self.house_events.update(gate.h_arguments)
-                self.add_gates(gates=gate.g_arguments, shallow=False)
-
-    def to_aralia(self, printer):
-        """Produces the Aralia definition of the fault tree.
-
-        Note that the Aralia format does not support advanced features.
-        The fault tree must be valid and well formed for printing.
-
-        Args:
-            printer: The output stream.
-
-        Raises:
-            KeyError: Some gate operator is not supported.
-        """
-        printer(self.name)
-        printer()
-
-        sorted_gates = toposort_gates([self.top_gate], self.gates)
-        for gate in sorted_gates:
-            gate.to_aralia(printer)
-
-        printer()
-
-        for basic_event in self.basic_events:
-            basic_event.to_aralia(printer)
-
-        printer()
-
-        for house_event in self.house_events:
-            house_event.to_aralia(printer)
-
-    def prune(self, gate: Gate):
-        if gate.num_arguments() == 1:
-            # Unexpected number of parents
-            if gate.num_parents() > 1:
-                print('Unexpected number of parents for gate ' + gate.name)
-            elif gate.num_parents() > 0:
-                parent: Gate = gate.parents.pop()
-                parent.g_arguments.remove(gate)
-                for x in gate.g_arguments:
-                    parent.add_argument(x)
-                for x in gate.b_arguments:
-                    parent.add_argument(x)
-                for x in gate.h_arguments:
-                    parent.add_argument(x)
-                for x in gate.u_arguments:
-                    parent.add_argument(x)
-                self.gates.remove(gate)
-                for gate in gate.g_arguments:
-                    self.prune(gate)
-
-
-def toposort_gates(root_gates, gates):
-    """Sorts gates topologically starting from the root gate.
-
-    The gate marks are used for the algorithm.
-    After this sorting the marks are reset to None.
-
-    Args:
-        root_gates: The root gates of the graph.
-        gates: Gates to be sorted.
-
-    Returns:
-        A deque of sorted gates.
-    """
-    for gate in gates:
-        gate.mark = ""
-
-    def visit(gate, final_list):
-        """Recursively visits the given gate sub-tree to include into the list.
-
-        Args:
-            gate: The current gate.
-            final_list: A deque of sorted gates.
-        """
-        assert gate.mark != "temp"
-        if not gate.mark:
-            gate.mark = "temp"
-            for arg in gate.g_arguments:
-                visit(arg, final_list)
-            gate.mark = "perm"
-            final_list.appendleft(gate)
-
-    sorted_gates = deque()
-    for root_gate in root_gates:
-        visit(root_gate, sorted_gates)
-    assert len(sorted_gates) == len(gates)
-    for gate in gates:
-        gate.mark = None
-    return sorted_gates
+        return recursive_str(self.top_gate)
