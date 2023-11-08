@@ -1,4 +1,4 @@
-from generator.event.Event import Event
+from fault_tree.event.Event import Event
 from generator.probability import Probability
 
 

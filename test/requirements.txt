@@ -1,4 +1,0 @@
-argparse
-ordered_set
-pytest
-lxml

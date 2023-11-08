@@ -1,6 +1,6 @@
 # Fault Tree Generator
 
-Fault Tree Generator is a utility for creating and exporting synthetic fault trees. It is designed to assist engineers and researchers in the field of reliability engineering and safety analysis.
+A python utility for parametrically creating and exporting synthetic fault trees of varying complexities.
 
 ## Table of Contents
 
@@ -8,6 +8,8 @@ Fault Tree Generator is a utility for creating and exporting synthetic fault tre
 - [Command Line Arguments](#command-line-arguments)
 - [Usage](#usage)
 - [Features](#features)
+- [Performance](#performance)
+- [Constraints](#constraints)
 - [Contributing](#contributing)
 - [Code of Conduct](#code-of-conduct)
 - [License](#license)
@@ -91,16 +93,29 @@ fault-tree-generator --weights-g 2 1 0.5 0 0 --max-prob 0.05 --min-prob 0.001
 ## Features
 
 - Generation of synthetic fault trees based on user-defined parameters.
-- Exporting fault trees to various formats for further analysis.
+- Exporting fault trees to various formats for further analysis, including boolean expression strings with topologically sorted elements.
 - A user-friendly command-line interface.
 
-## Contributing
+## Performance
 
-We welcome contributions to the Fault Tree Generator project! Please read our [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines on how to make contributions.
+The time complexity for generating fault trees is approximately:
 
-## Code of Conduct
+```
+O(N) + O((N/Ratio)^2 * exp(-NumArgs/Ratio)) + O(CommonG * exp(CommonB))
+```
 
-Our project adheres to a Code of Conduct that we expect all contributors to follow. Please read the [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) file for details.
+Where:
+- `N` is the number of basic events,
+- `Ratio` is `N / num_gate`,
+- `NumArgs` is the average number of gate arguments,
+- `CommonG` is the average percentage of common gates per gate,
+- `CommonB` is the average percentage of common basic events per gate.
+
+## Constraints
+
+When generating a fault tree with both the number of basic events and the number of gates constrained, other user-set 
+factors may be affected. However, if the number of gates is not constrained by the user, all other user-defined factors
+are preserved and utilized as specified.
 
 ## License
 
@@ -110,5 +125,4 @@ Fault Tree Generator is released under the MIT License. See the [LICENSE](LICENS
 
 Acknowledge any individuals or organizations that have contributed to the project.
 
-- John Doe for initial concept and design.
-- XYZ Research Lab for testing and feedback.
+- Olzhas Rakhimov for writing the initial scripts
