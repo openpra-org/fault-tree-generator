@@ -1,9 +1,15 @@
 import random
+import signal
 from collections import deque
 
 from fault_tree import FaultTree, CCFGroup
 from fault_tree.event import Gate, BasicEvent, HouseEvent
 from fault_tree.probability import PointEstimate
+
+
+# Define a timeout handler function
+def timeout_handler(signum, frame):
+    raise TimeoutError("Operation timed out")
 
 
 class GenerativeFaultTree(FaultTree):
@@ -16,41 +22,54 @@ class GenerativeFaultTree(FaultTree):
         factors: The fault tree generation factors.
     """
 
-    def __init__(self, name, factors, top_gate_name="root"):
+    def __init__(self, name, factors, top_gate_name="root", timeout=None):
         """Generates a fault tree of specified complexity factor.
 
         Args:
             name: The name of the system described by the fault tree container.
             factors: Fully configured generation factors.
+            top_gate_name: The name for the top gate.
+            timeout: The maximum time allowed for the generation process.
         """
-        super(GenerativeFaultTree, self).__init__(name)
-        self.factors = factors
-        self.construct_top_gate(top_gate_name)
+        # Set the timeout signal if a timeout is specified
+        if timeout is not None:
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(timeout)
 
-        # Estimating the parameters
-        num_gate = factors.get_num_gate()
-        num_common_basic = factors.get_num_common_basic(num_gate)
-        num_common_gate = factors.get_num_common_gate(num_gate)
-        common_basic = [
-            self.construct_basic_event() for _ in range(num_common_basic)
-        ]
-        common_gate = [self.construct_gate() for _ in range(num_common_gate)]
+        try:
+            super(GenerativeFaultTree, self).__init__(name)
+            self.factors = factors
+            self.construct_top_gate(top_gate_name)
 
-        # Container for not yet initialized gates
-        # A deque is used to traverse the tree breadth-first
-        gates_queue = deque()
-        gates_queue.append(self.top_gate)
-        while gates_queue:
-            self.init_gates(gates_queue, common_basic, common_gate)
+            # Estimating the parameters
+            num_gate = factors.get_num_gate()
+            num_common_basic = factors.get_num_common_basic(num_gate)
+            num_common_gate = factors.get_num_common_gate(num_gate)
+            common_basic = [
+                self.construct_basic_event() for _ in range(num_common_basic)
+            ]
+            common_gate = [self.construct_gate() for _ in range(num_common_gate)]
 
-        assert (not [x for x in self.basic_events if x.is_orphan()])
-        assert (not [
-            x for x in self.gates
-            if x.is_orphan() and x is not self.top_gate
-        ])
+            # Container for not yet initialized gates
+            # A deque is used to traverse the tree breadth-first
+            gates_queue = deque()
+            gates_queue.append(self.top_gate)
+            while gates_queue:
+                self.init_gates(gates_queue, common_basic, common_gate)
 
-        self.distribute_house_events()
-        self.generate_ccf_groups()
+            assert (not [x for x in self.basic_events if x.is_orphan()])
+            assert (not [
+                x for x in self.gates
+                if x.is_orphan() and x is not self.top_gate
+            ])
+
+            self.distribute_house_events()
+            self.generate_ccf_groups()
+
+        finally:
+            # Disable the alarm after the operation is complete
+            if timeout is not None:
+                signal.alarm(0)
 
     def construct_top_gate(self, root_name="root"):
         """Constructs and assigns a new gate suitable for being a root.

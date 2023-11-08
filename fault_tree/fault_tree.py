@@ -128,35 +128,10 @@ class FaultTree:
         Returns:
             str: The boolean expression representing the fault tree.
         """
-
-        sorted_gates = FaultTree.toposort_gates(self.top_gates or [self.top_gate], self.gates)
-
-        if not sorted_gates:
+        if not self.top_gate:
             return ""
 
-        for gate in sorted_gates:
-            return gate.expr()
-
-        # def recursive_str(event):
-        #     """Recursively builds the boolean expression for an event.
-        #
-        #     Args:
-        #         event (Event): The event to build the expression for.
-        #
-        #     Returns:
-        #         str: The boolean expression for the event.
-        #     """
-        #     if isinstance(event, BasicEvent):
-        #         return gate.name
-        #     elif isinstance(gate, HouseEvent):
-        #         return gate.name
-        #     elif isinstance(gate, Gate):
-        #         # Assuming Gate class has a __str__ method
-        #         return gate.expr()
-        #     else:
-        #         raise TypeError("Unknown event type in fault tree")
-        #
-        # return recursive_str(self.top_gate)
+        return self.top_gate.expr()
 
     @staticmethod
     def toposort_gates(root_gates: OrderedSet[Gate], gates: OrderedSet[Gate]) -> Deque:

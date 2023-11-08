@@ -1,4 +1,5 @@
 import argparse
+import os
 
 from typing import Any
 import random
@@ -82,11 +83,11 @@ class FaultTreeGeneratorArgParser(argparse.ArgumentParser):
         self.add_argument("-b", "--num-basic",
                           type=int,
                           help="Number of basic events.",
-                          default=random.randint(1, 128),
+                          default=random.randint(2, 4),
                           metavar="int")
         self.add_argument("-a", "--num-args",
                           type=float,
-                          default=(random.randint(2, 5)),
+                          default=3.0,
                           help="Average number of gate arguments.",
                           metavar="float")
         self.add_argument("--weights-g",
@@ -94,11 +95,11 @@ class FaultTreeGeneratorArgParser(argparse.ArgumentParser):
                           nargs="+",
                           metavar="float",
                           help="Weights for [AND, OR, K/N, NOT, XOR] gates.",
-                          default=[random_float(0.1, 1.0),
-                                   random_float(0.1, 1.0),
+                          default=[random_float(1, 2),
+                                   random_float(1, 2),
                                    0,
-                                   random_float(0.001, 0.005),
-                                   random_float(0.0005, 0.001)
+                                   random_float(0.5, 1),
+                                   random_float(1, 2)
                                    ]
                           )
         self.add_argument("--common-b",
@@ -108,17 +109,17 @@ class FaultTreeGeneratorArgParser(argparse.ArgumentParser):
                           help="Average percentage of common basic events per gate.")
         self.add_argument("--common-g",
                           type=float,
-                          default=random_float(0.0001, 0.0005),
+                          default=0.0,
                           metavar="float",
                           help="Average percentage of common gates per gate.")
         self.add_argument("--parents-b",
                           type=float,
-                          default=random.randint(2, 3),
+                          default=2,
                           metavar="float",
                           help="Average number of parents for common basic events.")
         self.add_argument("--parents-g",
                           type=float,
-                          default=random.randint(2, 3),
+                          default=2,
                           metavar="float",
                           help="Average number of parents for common gates.")
         self.add_argument("-g", "--num-gate",
@@ -148,8 +149,24 @@ class FaultTreeGeneratorArgParser(argparse.ArgumentParser):
                           metavar="int")
         self.add_argument("-o", "--out",
                           type=str,
+                          default="stdout",
                           metavar="path",
                           help="File path to write the fault tree.")
         self.add_argument("--nest",
                           action="store_true",
                           help="Nest NOT connectives in Boolean formulae.")
+        self.add_argument("-n", "--max-trees",
+                          type=int,
+                          help="Maximum number of fault trees to generate.",
+                          default=10,
+                          metavar="int")
+        self.add_argument("-t", "--timeout",
+                          type=int,
+                          help="Number of seconds to wait for a single fault tree to be generated before timing out",
+                          default=1,
+                          metavar="int")
+        self.add_argument("-N", "--max-workers",
+                          type=int,
+                          help="Maximum number of worker processes to spin up for generating fault trees",
+                          default=os.cpu_count() or 1,
+                          metavar="int")

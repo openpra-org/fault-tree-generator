@@ -87,9 +87,9 @@ class ComplexityFactors:
             FactorError: Invalid values or setup.
         """
         max_common = 0.9  # a practical limit (not a formal constraint)
-        if common_b <= 0 or common_b > max_common:
+        if common_b < 0 or common_b > max_common:
             raise ComplexityFactorError("common_b not in (0, " + str(max_common) + "].")
-        if common_g <= 0 or common_g > max_common:
+        if common_g < 0 or common_g > max_common:
             raise ComplexityFactorError("common_g not in (0, " + str(max_common) + "].")
         max_parent = 100  # also a practical limit
         if parents_b < 2 or parents_b > max_parent:

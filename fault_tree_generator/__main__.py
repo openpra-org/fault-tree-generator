@@ -1,9 +1,11 @@
 import argparse
 import sys
 import random
+from multiprocessing import Manager
 from argparse import ArgumentTypeError
 from fault_tree_generator import ComplexityFactorError, GenerativeFaultTree
 from fault_tree_generator import FaultTreeGeneratorArgParser, ComplexityFactors
+import concurrent.futures
 
 
 def setup_factors(args: argparse.Namespace) -> ComplexityFactors:
@@ -35,6 +37,27 @@ def setup_factors(args: argparse.Namespace) -> ComplexityFactors:
     return complexity_factors
 
 
+# Define a function to generate a single fault tree
+def generate(index, args, factors, lock, file_path):
+    try:
+        # Create a new fault tree with a unique name
+        ft_name = f"{args.ft_name}_{index}"
+        fault_tree = GenerativeFaultTree(name=ft_name, factors=factors, top_gate_name=args.root, timeout=args.timeout)
+        result = fault_tree.expr()
+
+        with lock:
+            if file_path == "stdout":
+                sys.stdout.write(result + '\n')
+            else:
+                with open(file_path, 'a') as f:
+                    f.write(result + '\n')
+
+    except TimeoutError as e:
+        return f"Fault tree {index} generation timed out: {e}"
+    except Exception as e:
+        return f"Fault tree {index} generation failed with exception: {e}"
+
+
 def main() -> None:
     """The main function for the fault tree generator script.
 
@@ -49,8 +72,26 @@ def main() -> None:
         parser = FaultTreeGeneratorArgParser()
         parsed_args, leftovers = parser.parse_known_args()
         factors = setup_factors(parsed_args)
-        fault_tree = GenerativeFaultTree(parsed_args.ft_name, factors, parsed_args.root)
-        print(fault_tree.expr())
+        manager = Manager()
+        lock = manager.Lock()
+        # Use ProcessPoolExecutor for parallel processing
+        with concurrent.futures.ProcessPoolExecutor(max_workers=parsed_args.max_workers) as executor:
+            # Submit tasks to the executor
+            future_to_index = {
+                executor.submit(generate, i + 1, parsed_args, factors, lock, parsed_args.out): i + 1
+                for i in range(parsed_args.max_trees)
+            }
+
+            # Process the results as they are completed
+            for future in concurrent.futures.as_completed(future_to_index):
+                index = future_to_index[future]
+                try:
+                    future.result()
+                except concurrent.futures.TimeoutError:
+                    print(f"Fault tree {index} generation timed out after {parsed_args.timeout} seconds.", file=sys.stderr)
+                except Exception as e:
+                    print(f"Fault tree {index} generation failed with exception: {e}", file=sys.stderr)
+
     except ArgumentTypeError as err:
         print("Argument Error:\n" + str(err), file=sys.stderr)
         sys.exit(2)
