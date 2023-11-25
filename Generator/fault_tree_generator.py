@@ -1,15 +1,12 @@
 # pylint: disable=too-many-lines
 
 from collections import deque
-import numpy
+
 import random
-import math
 import sys
 import json
-import itertools
 import argparse as ap
-from itertools import combinations
-from math import factorial
+
 from math import comb
 
 from fault_tree import BasicEvent, HouseEvent, Gate, CcfGroup, FaultTree
@@ -1233,10 +1230,16 @@ def manage_cmd_args(argv=None):
                         help="apply the OpenPRA JSON format to the output")
     parser.add_argument("--FTREX_ID",
                         action="store_true",
-                        help="apply the OpenPRA JSON format to the output")
+                        help="apply the FTREX ID format to the output")
     parser.add_argument("--FTREX_NAME",
                         action="store_true",
-                        help="apply the OpenPRA JSON format to the output")
+                        help="apply the FTREX Name format to the output")
+    parser.add_argument("--OpenFTA_fta",
+                        action="store_true",
+                        help="apply the OpenFTA fta format to the output")
+    parser.add_argument("--OpenFTA_ped",
+                        action="store_true",
+                        help="apply the OpenFTA ped format to the output")
     parser.add_argument("--nest",
                         action="store_true",
                         help="nest NOT connectives in Boolean formulae")
@@ -1304,6 +1307,10 @@ def main(argv=None):
     elif args.FTREX_NAME:
         # write_info_JSON_printer(fault_tree, printer, args.seed)
         fault_tree.to_FTREX_NAME(printer, args.nest)
+    elif args.OpenFTA_fta:
+        fault_tree.to_OpenFTA_fta(printer, args.nest)
+    elif args.OpenFTA_ped:
+        fault_tree.to_OpenFTA_ped(printer, args.nest)
     else:
         write_info(fault_tree, printer, args.seed)
         write_summary(fault_tree, printer)
