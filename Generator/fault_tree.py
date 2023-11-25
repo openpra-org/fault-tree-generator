@@ -15,10 +15,8 @@
 """Fault tree classes and common facilities."""
 
 from collections import deque
-from math import comb
 import json
-from fractions import Fraction
-from decimal import Decimal
+
 class Event:
     """Representation of a base class for an event in a fault tree.
 
@@ -1249,6 +1247,44 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
         #truncation limit
         printer("LIMIT 1E-10")
 
+    def to_OpenFTA_fta(self, printer, nest=False):
+        sorted_gates = toposort_gates(self.top_gates or [self.top_gate], self.gates)
+        top_gate_serial = 1
+        printer(self.name, ".ped")
+        printer("S NULL 0")
+        printer("0")
+
+        def print_basic_events(current_gate):
+            total_arguments = len(current_gate.g_arguments) + len(current_gate.b_arguments)
+            printer("M TG 1")
+            printer("0")
+            if current_gate.operator == "and":
+                printer("A {name} {arguments}".format(name = current_gate.name, arguments = total_arguments))
+            else:
+                printer("O {name} {arguments}".format(name = current_gate.name, arguments = total_arguments))
+            for b_arg in current_gate.b_arguments:
+                printer("B ", b_arg.name, " 0")
+
+        for gate in sorted_gates:
+            print_basic_events(gate)
+
+    def to_OpenFTA_ped(self, printer, nest=False):
+        """At first, each basic event(BE) will be converted to the following format:
+                    BE_name;;keyword_for_BE ;;BE_probability; ;
+        Example:    B107;;B ;;9.216325e-003; ;
+        Then this string will have to be encoded to UTF-8 format before it can be
+        converted to Hexadecimal format. After converting it to hexadecimal, "0a"
+        is added at the end of each basic event to indicate it's time for the next
+        entry.
+        """
+        data = ""
+        for basic_event in self.basic_events:
+            ascii_format = ("{name};;B\0;Description for {name};{probability:.6e};\0;\n"
+                            .format(name = basic_event.name,probability = basic_event.prob))
+            utf_format = ascii_format.encode('utf-8')
+            hex_format = utf_format.hex()
+            data += hex_format
+        printer(" ".join(data[i:i+4] for i in range(0, len(data), 4)))
 
 
 def toposort_gates(root_gates, gates):
