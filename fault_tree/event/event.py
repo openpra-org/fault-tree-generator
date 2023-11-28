@@ -1,5 +1,6 @@
 from ordered_set import OrderedSet
-from typing import Optional, TYPE_CHECKING
+from typing import Optional, TYPE_CHECKING, Set
+from pyeda.inter import *
 
 # Use TYPE_CHECKING to avoid circular imports at runtime but still enable type hinting.
 if TYPE_CHECKING:
@@ -44,6 +45,19 @@ class Event:
             str: The name of the event.
         """
         return str(self)
+
+    def to_bdd(self, var_order: Optional[OrderedSet[str]] = None):
+        """Converts the event to a Binary Decision Diagram (BDD).
+
+        This method should be overridden by subclasses.
+
+        Args:
+            var_order (Optional[OrderedSet[str]]): The order of variables for the BDD.
+
+        Raises:
+            NotImplementedError: If the method is not overridden in a subclass.
+        """
+        raise NotImplementedError("Subclasses must override this method")
 
     def __hash__(self) -> int:
         """Returns the hash of the event.

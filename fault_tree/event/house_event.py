@@ -1,5 +1,7 @@
 from fault_tree.event import Event
 from typing import Literal, Optional
+from ordered_set import OrderedSet
+from pyeda.inter import expr2bdd, exprvar
 
 
 class HouseEvent(Event):
@@ -40,3 +42,20 @@ class HouseEvent(Event):
             raise ValueError(f"Invalid state: {value}. Valid states are: {self.VALID_STATES}")
         self._state = value
 
+    def to_bdd(self, var_order: Optional[OrderedSet[str]] = None):
+        """Converts the house event to a BDD constant based on its state.
+
+        Args:
+            var_order (Optional[OrderedSet[str]]): The order of variables for the BDD.
+
+        Returns:
+            BDD: The BDD constant representing the house event.
+        """
+        # Create a BDD variable for the house event
+        bdd_var = exprvar(self.name)
+
+        # Convert the BDD variable to its constant value based on the state of the house event
+        if self.state in ['true', True]:
+            return expr2bdd(bdd_var)
+        else:
+            return expr2bdd(~bdd_var)

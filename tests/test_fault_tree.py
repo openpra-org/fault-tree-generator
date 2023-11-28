@@ -57,15 +57,6 @@ class TestFaultTree(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.ft.prune(self.gate1)
 
-    def test_toposort_gates(self):
-        # Test topological sorting of gates
-        self.gate1.add_argument(self.basic_event1)
-        self.gate2.add_argument(self.gate1)
-        self.ft.add_gates(OrderedSet([self.gate2]))
-        self.ft.top_gate = self.gate2
-        sorted_gates = self.ft.toposort_gates()
-        self.assertEqual(list(sorted_gates), [self.gate1, self.gate2])
-
     def test_getstate_setstate(self):
         # Test the serialization and deserialization of the fault tree (getstate and setstate)
         self.ft.add_gates(OrderedSet([self.gate1, self.gate2]))

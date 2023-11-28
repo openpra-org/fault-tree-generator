@@ -1,6 +1,7 @@
 from collections import deque
 from typing import Optional, Dict, Any, Deque
 from ordered_set import OrderedSet
+from pyeda.inter import bddvars, expr2bdd, expr, exprvar
 
 from fault_tree.event import BasicEvent, HouseEvent, Gate
 from fault_tree import CCFGroup
@@ -129,51 +130,49 @@ class FaultTree:
             str: The boolean expression representing the fault tree.
         """
         if not self.top_gate:
-            return ""
+            raise ValueError("The fault tree has no top gate defined")
 
         return self.top_gate.expr()
 
-    @staticmethod
-    def toposort_gates(root_gates: OrderedSet[Gate], gates: OrderedSet[Gate]) -> Deque:
-        """Sorts gates topologically starting from the root gate.
-
-        The gate marks are used for the algorithm.
-        After this sorting the marks are reset to None.
+    def to_bdd(self, var_order: Optional[OrderedSet[str]] = None):
+        """Converts the fault tree to a Binary Decision Diagram (BDD).
 
         Args:
-            root_gates: The root gates of the graph.
-            gates: Gates to be sorted.
+            var_order (Optional[OrderedSet[str]]): The order of variables for the BDD.
 
         Returns:
-            A deque of sorted gates.
+            BDD: The BDD representation of the fault tree.
         """
+        if self.top_gate is None:
+            raise ValueError("The fault tree has no top gate defined")
 
-        for uninitialized_gate in gates:
-            uninitialized_gate.mark = ""
+        return self.top_gate.to_bdd(var_order=var_order)
 
-        def visit(current_gate, final_list):
-            """Recursively visits the given gate subtree to include into the list.
+    def to_boolean(self, var_order: Optional[OrderedSet[str]] = None, simplify: bool = False):
+        """Converts the fault tree to a Binary Decision Diagram (BDD).
 
-            Args:
-                current_gate: The current gate.
-                final_list: A deque of sorted gates.
-            """
-            assert current_gate.mark != "temp"
-            if not current_gate.mark:
-                current_gate.mark = "temp"
-                for arg in current_gate.g_arguments:
-                    visit(arg, final_list)
-                current_gate.mark = "perm"
-                final_list.appendleft(current_gate)
+        Args:
+            var_order (Optional[OrderedSet[str]]): The order of variables for the BDD.
+            simplify (bool): Whether to simplify/reduce the expression or not
 
-        sorted_gates = deque()
+        Returns:
+            tuple: The boolean expression, PyEDA expression, and BDD representation of the fault tree.
+        """
+        if self.top_gate is None:
+            raise ValueError("The fault tree has no top gate defined")
 
-        for root_gate in root_gates:
-            visit(root_gate, sorted_gates)
+        # Set the variable order globally if provided
+        if var_order is not None:
+            for var_name in var_order:
+                exprvar(var_name)
 
-        assert len(sorted_gates) == len(gates)
+        # Get the boolean expression for the entire fault tree
+        my_expr = self.expr()
+        pyeda_expr = expr(my_expr, simplify=simplify)
+        # Convert the boolean expression to a BDD
+        bdd = expr2bdd(pyeda_expr)
+        return my_expr, pyeda_expr, bdd
 
-        for gate in gates:
-            gate.mark = None
-
-        return sorted_gates
+    def var_bdd(self):
+        vars = len(self.basic_events)
+        my_expr = self.expr()

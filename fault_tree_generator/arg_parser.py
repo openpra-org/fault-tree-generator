@@ -83,7 +83,7 @@ class FaultTreeGeneratorArgParser(argparse.ArgumentParser):
         self.add_argument("-b", "--num-basic",
                           type=int,
                           help="Number of basic events.",
-                          default=random.randint(2, 4),
+                          default=random.randint(2, 8192),
                           metavar="int")
         self.add_argument("-a", "--num-args",
                           type=float,

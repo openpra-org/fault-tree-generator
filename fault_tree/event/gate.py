@@ -1,6 +1,7 @@
 from collections import deque
 from ordered_set import OrderedSet
 from typing import Optional, Union, TYPE_CHECKING, Set
+from pyeda.inter import bddvars, expr2bdd, expr
 
 from .event import Event
 from .basic_event import BasicEvent
@@ -191,7 +192,7 @@ class Gate(Event):
         """Returns the symbolic boolean expression string for the gate.
 
         The string is built using symbols for logical operations:
-        '+' for OR, '*' for AND, and "'" for NOT.
+        '|' for OR, '&' for AND, '~' for NOT, '^' for XOR.
 
         Returns:
             str: The symbolic boolean expression representing the gate.
@@ -214,58 +215,40 @@ class Gate(Event):
 
         # Build the expression based on the gate operator
         if self.operator == "and":
-            return '(' + '*'.join(all_args) + ')'
+            return '(' + ' & '.join(all_args) + ')'
         elif self.operator == "or":
-            return '(' + '+'.join(all_args) + ')'
+            return '(' + ' | '.join(all_args) + ')'
         elif self.operator == "not":
             # NOT gates should only have one argument
-            return all_args[0] + "'"
+            assert len(all_args) == 1, "NOT gate should have exactly one argument"
+            return '~' + all_args[0]
         elif self.operator == "xor":
             # XOR is represented as a ^ b
             # For more than two arguments, XOR is associative: a ^ b ^ c
-            return '(' + '^'.join(all_args) + ')'
+            return '(' + ' ^ '.join(all_args) + ')'
         elif self.operator == "atleast":
             # For k-out-of-n gates, we will use a special notation: atleast_k(args)
-            return f"atleast_{self.k_num}(" + ','.join(all_args) + ')'
+            # This is not a standard operator in pyeda, so you may need to handle it separately
+            return f"atleast_{self.k_num}(" + ', '.join(all_args) + ')'
         else:
             raise ValueError(f"Unknown gate operator: {self.operator}")
 
-    # def __str__(self):
-    #     """Returns the symbolic boolean expression string for the gate.
-    #
-    #     The string is built using symbols for logical operations:
-    #     '+' for OR, '*' for AND, and "'" for NOT.
-    #
-    #     Returns:
-    #         str: The symbolic boolean expression representing the gate.
-    #     """
-    #     # Helper function to format the arguments of the gate
-    #     def format_arguments(arguments):
-    #         return [str(arg) for arg in arguments]
-    #
-    #     # Format the arguments for basic events, house events, and child gates
-    #     b_args = format_arguments(self.b_arguments)
-    #     h_args = format_arguments(self.h_arguments)
-    #     g_args = format_arguments(self.g_arguments)
-    #     u_args = format_arguments(self.u_arguments)
-    #
-    #     # Combine all arguments into a single list
-    #     all_args = b_args + h_args + g_args + u_args
-    #
-    #     # Build the expression based on the gate operator
-    #     if self.operator == "and":
-    #         return '(' + '*'.join(all_args) + ')'
-    #     elif self.operator == "or":
-    #         return '(' + '+'.join(all_args) + ')'
-    #     elif self.operator == "not":
-    #         # NOT gates should only have one argument
-    #         return all_args[0] + "'"
-    #     elif self.operator == "xor":
-    #         # XOR is represented as a ^ b
-    #         # For more than two arguments, XOR is associative: a ^ b ^ c
-    #         return '(' + '^'.join(all_args) + ')'
-    #     elif self.operator == "atleast":
-    #         # For k-out-of-n gates, we will use a special notation: atleast_k(args)
-    #         return f"atleast_{self.k_num}(" + ','.join(all_args) + ')'
-    #     else:
-    #         raise ValueError(f"Unknown gate operator: {self.operator}")
+    def to_bdd(self, var_order: Optional[OrderedSet[str]] = None):
+        """Converts the gate to a BDD based on its logical operation and child events.
+
+        Args:
+            var_order (Optional[List[str]]): The order of variables for the BDD.
+
+        Returns:
+            BDD: The BDD representation of the gate.
+        """
+        if self.operator == "and":
+            return expr2bdd(expr('&', *[arg.to_bdd() for arg in self.g_arguments]))
+        elif self.operator == "or":
+            return expr2bdd(expr('|', *[arg.to_bdd() for arg in self.g_arguments]))
+        elif self.operator == "not":
+            assert len(self.g_arguments) == 1, "NOT gate should have exactly one argument"
+            return ~next(iter(self.g_arguments)).to_bdd()
+        # Add more cases for other gate types if necessary
+        else:
+            raise ValueError(f"Unknown gate operator: {self.operator}")

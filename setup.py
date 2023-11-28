@@ -20,8 +20,9 @@ setuptools.setup(
     ],
     python_requires='>=3.6',
     install_requires=[
-        'argparse',
-        'ordered_set',
+        'argparse>=1.4.0',
+        'ordered_set>=4.1.0',
+        'pyeda>=0.28.0'
     ],
     extras_require={
         'dev': [
