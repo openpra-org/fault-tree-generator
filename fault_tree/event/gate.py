@@ -252,3 +252,25 @@ class Gate(Event):
         # Add more cases for other gate types if necessary
         else:
             raise ValueError(f"Unknown gate operator: {self.operator}")
+
+    def to_openfta(self):
+
+        def format_arguments(arguments):
+            return [arg.to_openfta() for arg in arguments]
+
+        # Format the arguments for basic events, house events, and child gates
+        b_args = format_arguments(self.b_arguments)
+        h_args = format_arguments(self.h_arguments)
+        # u_args = format_arguments(self.u_arguments)
+        # g_args = format_arguments(self.g_arguments)
+
+        # Combine all arguments into a single list
+        all_args = b_args + h_args #+ u_args + g_args
+
+        symbol = 'O' if self.operator == 'or' else 'A'
+        num_args = len(all_args)
+        label = f"{symbol} {self.name} {num_args}"
+        all_args.insert(0, label)
+
+        return all_args
+

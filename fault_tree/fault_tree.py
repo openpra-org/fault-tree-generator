@@ -148,6 +148,12 @@ class FaultTree:
 
         return self.top_gate.to_bdd(var_order=var_order)
 
+    def to_openfta(self):
+        if not self.top_gate:
+            raise ValueError("The fault tree has no top gate defined")
+
+        return self.top_gate.to_openfta()
+
     def to_boolean(self, var_order: Optional[OrderedSet[str]] = None, simplify: bool = False):
         """Converts the fault tree to a Binary Decision Diagram (BDD).
 

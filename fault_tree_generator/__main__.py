@@ -43,7 +43,7 @@ def generate(index, args, factors, lock, file_path):
         # Create a new fault tree with a unique name
         ft_name = f"{args.ft_name}_{index}"
         fault_tree = GenerativeFaultTree(name=ft_name, factors=factors, top_gate_name=args.root, timeout=args.timeout)
-        result = fault_tree.expr()
+        result = fault_tree.to_openfta()
 
         with lock:
             if file_path == "stdout":

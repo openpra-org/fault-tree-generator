@@ -65,3 +65,6 @@ class BasicEvent(Event):
         else:
             index = var_order.index(self.name)
             return exprvar('x' + str(index))
+
+    def to_openfta(self):
+        return f"B {self.name} 0"

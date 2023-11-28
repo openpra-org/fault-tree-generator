@@ -46,6 +46,9 @@ class Event:
         """
         return str(self)
 
+    def to_openfta(self):
+        return f"E {self.name} 0"
+
     def to_bdd(self, var_order: Optional[OrderedSet[str]] = None):
         """Converts the event to a Binary Decision Diagram (BDD).
 

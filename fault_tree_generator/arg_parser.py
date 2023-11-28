@@ -83,7 +83,7 @@ class FaultTreeGeneratorArgParser(argparse.ArgumentParser):
         self.add_argument("-b", "--num-basic",
                           type=int,
                           help="Number of basic events.",
-                          default=random.randint(2, 8192),
+                          default=random.randint(2, 4),
                           metavar="int")
         self.add_argument("-a", "--num-args",
                           type=float,
@@ -95,11 +95,11 @@ class FaultTreeGeneratorArgParser(argparse.ArgumentParser):
                           nargs="+",
                           metavar="float",
                           help="Weights for [AND, OR, K/N, NOT, XOR] gates.",
-                          default=[random_float(1, 2),
-                                   random_float(1, 2),
+                          default=[1,
+                                   1,
                                    0,
-                                   random_float(0.5, 1),
-                                   random_float(1, 2)
+                                   0,
+                                   0,
                                    ]
                           )
         self.add_argument("--common-b",
