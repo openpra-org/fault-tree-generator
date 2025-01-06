@@ -30,24 +30,44 @@ class EventTree:
             self._build_initial_state_xml(self.initial_state, initial_state_element)
 
         return event_tree_element
-    def _build_initial_state_xml(self, state, parent_element):
-        queue = deque([(state, parent_element)])  # Initialize a queue with the root element
-        processed_elements = set()  # Track processed elements to avoid duplication
 
-        while queue:
-            current_state, current_parent = queue.popleft()  # Dequeue the current element
+    def _build_initial_state_xml(self, parent_element):
+        """
+        Build the initial state structure for the event tree in XML.
 
-            # Check if the current_state has already been processed
-            if id(current_state) in processed_elements:
-                continue  # Skip processing if the element has already been processed
-            processed_elements.add(id(current_state))
+        Args:
+            parent_element (Element): The parent XML element to which child elements will be added.
+        """
 
-            # Ensure the state dictionary has the 'name' key
-            state_name = current_state.get('name', 'unknown_element')
-            # Create the current element with its attributes
-            current_element = ET.SubElement(current_parent, state_name, current_state.get('attributes', {}))
+        def recursive_build(parent, depth):
+            # Stop recursion when all functional events are processed
+            if depth >= len(self.functional_events_id):
+                return
 
-            # Iterate over the children of the current state
-            for child in current_state.get('children', []):
-                # Enqueue child elements for processing
-                queue.append((child, current_element))
+            # Get the current functional event ID and name
+            functional_event_id = self.functional_events_id[depth]
+
+            # Create a fork element for the current functional event
+            fork_element = ET.SubElement(parent, 'fork', {'functional-event': functional_event_id})
+
+            # Create Success path
+            success_path = ET.SubElement(fork_element, 'path', {'state': 'Success'})
+            success_formula = ET.SubElement(success_path, 'collect-formula')
+            not_element = ET.SubElement(success_formula, 'not')
+            ET.SubElement(not_element, 'gate', {'name': f'FT{depth + 1}.TOP'})
+            if depth == len(self.functional_events_id) - 1:  # If it's the last event
+                ET.SubElement(success_path, 'sequence', {'name': f'S{2 ** (depth + 1) - 1}'})
+            else:
+                recursive_build(success_path, depth + 1)
+
+            # Create Failure path
+            failure_path = ET.SubElement(fork_element, 'path', {'state': 'Failure'})
+            failure_formula = ET.SubElement(failure_path, 'collect-formula')
+            ET.SubElement(failure_formula, 'gate', {'name': f'FT{depth + 1}.TOP'})
+            if depth == len(self.functional_events_id) - 1:  # If it's the last event
+                ET.SubElement(failure_path, 'sequence', {'name': f'S{2 ** (depth + 1) - 2}'})
+            else:
+                recursive_build(failure_path, depth + 1)
+
+        # Start recursive building from the root element
+        recursive_build(parent_element, 0)
