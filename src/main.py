@@ -30,11 +30,19 @@ def main ():
 
     #2.definition of number of functional events
     number_of_functional_events = int(input('Number of functional events: '))
-
     #3.generate pra model
     generate_et(number_of_functional_events)
     for functional_event in range(number_of_functional_events):
-        generate_ft(['-o' + str(open_psa_model_directory) + 'test' + str(functional_event+1) +'.xml', '-b'+ str(functional_event+100)])
+
+        argv = [
+            '--ft-name',  'FT'+ str(functional_event + 1),
+            '--root', 'TOP',
+            '-b', str(functional_event + 100),
+            '-o', str(open_psa_model_directory) + 'test' + str(functional_event + 1) + '.xml',
+            ]
+        print('Generated command line arguments: ', argv)
+
+        generate_ft(argv)
 
 if __name__ == '__main__':
     main()
