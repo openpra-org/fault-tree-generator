@@ -3,7 +3,7 @@ from XML_dumper import XMLDumper
 from event_tree import EventTree
 import sys
 import argparse
-import fault_tree_generator
+from fault_tree_generator import fault_tree_generator
 from fault_tree_generator import FactorError
 
 def generate_et(number_of_functional_events):
@@ -12,7 +12,7 @@ def generate_et(number_of_functional_events):
 def generate_ft(argv=None):
     print("Generating fault tree...")
     try:
-        fault_tree = fault_tree_generator.fault_tree_generator()
+        fault_tree =fault_tree_generator(argv)
     except ap.ArgumentTypeError as err:
         print('Argument Error: \n' + str(err))
         sys.exit(2)
@@ -33,7 +33,7 @@ def main ():
 
     #3.generate pra model
     generate_et(number_of_functional_events)
-    generate_ft()
+    generate_ft(['-o' + str(open_psa_model_directory) + 'test.xml'])
 
 if __name__ == '__main__':
     main()
