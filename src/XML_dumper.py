@@ -12,8 +12,11 @@ class XMLDumper:
             root = ET.Element('opsa-mef')
 
             # Append each parsed object (XML element) to the root
-            for parsed_object in parsed_objects:
-                root.append(parsed_object)
+            if isinstance(parsed_objects, (list, tuple)):
+                for parsed_object in parsed_objects:
+                    root.append(parsed_object)
+            else:
+                root.append(parsed_objects)
 
             # Create ElementTree object with the root element
             tree = ET.ElementTree(root)
