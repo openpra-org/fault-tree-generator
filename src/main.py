@@ -12,14 +12,15 @@ def generate_et(number_of_functional_events):
     print(functional_events)
     sequences= [f"S{index}" for index in range(1, 2 ** number_of_functional_events+1)]
     print(sequences)
-    name='eventTree'
-    event_tree = EventTree(name)
+    event_tree_name='event-Tree'
+    event_tree = EventTree(event_tree_name)
     event_tree.functional_events_id=functional_events
     event_tree.functional_events_name=functional_events
     event_tree.sequences=sequences
     a= event_tree.to_xml()
-    open_psa_model_directory = './../models/open-psa/even_tree.xml'
-    xml_dumper =XMLDumper()
+    open_psa_model_directory = './../models/open-psa/event_tree.xml'
+    initiating_event_name= f'INIT{number_of_functional_events}'
+    xml_dumper =XMLDumper(initiating_event_name, event_tree_name)
     xml_dumper.dump_object_to_xml(a,open_psa_model_directory)
 
 def generate_ft(argv=None):
