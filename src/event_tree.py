@@ -25,9 +25,9 @@ class EventTree:
         for sequence in self.sequences:
             sequence_element = ET.SubElement(event_tree_element, 'define-sequence', {'name': sequence})
 
-        if self.initial_state:
+        if self.functional_events_id:
             initial_state_element = ET.SubElement(event_tree_element, 'initial-state')
-            self._build_initial_state_xml(self.initial_state, initial_state_element)
+            self._build_initial_state_xml(initial_state_element)
 
         return event_tree_element
 
@@ -38,6 +38,7 @@ class EventTree:
         Args:
             parent_element (Element): The parent XML element to which child elements will be added.
         """
+        sequence_counter = [1]  # Using a mutable list to keep track of the sequence counter
 
         def recursive_build(parent, depth):
             # Stop recursion when all functional events are processed
@@ -56,7 +57,8 @@ class EventTree:
             not_element = ET.SubElement(success_formula, 'not')
             ET.SubElement(not_element, 'gate', {'name': f'FT{depth + 1}.TOP'})
             if depth == len(self.functional_events_id) - 1:  # If it's the last event
-                ET.SubElement(success_path, 'sequence', {'name': f'S{2 ** (depth + 1) - 1}'})
+                ET.SubElement(success_path, 'sequence', {'name': f'S{sequence_counter[0]}'})
+                sequence_counter[0] += 1
             else:
                 recursive_build(success_path, depth + 1)
 
@@ -65,7 +67,8 @@ class EventTree:
             failure_formula = ET.SubElement(failure_path, 'collect-formula')
             ET.SubElement(failure_formula, 'gate', {'name': f'FT{depth + 1}.TOP'})
             if depth == len(self.functional_events_id) - 1:  # If it's the last event
-                ET.SubElement(failure_path, 'sequence', {'name': f'S{2 ** (depth + 1) - 2}'})
+                ET.SubElement(failure_path, 'sequence', {'name': f'S{sequence_counter[0]}'})
+                sequence_counter[0] += 1
             else:
                 recursive_build(failure_path, depth + 1)
 
