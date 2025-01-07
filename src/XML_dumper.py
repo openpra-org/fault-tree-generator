@@ -3,13 +3,15 @@ import xml.dom.minidom
 import html
 
 class XMLDumper:
-    def __init__(self):
-        pass
+    def __init__(self, name, event_tree_name):
+        self.name = name
+        self.event_tree_name = event_tree_name
 
     def dump_object_to_xml(self, parsed_objects, file_path):
         try:
             # Create a root element for the XML tree
             root = ET.Element('opsa-mef')
+            initating_event_element= ET.SubElement(root, 'initating-event', {'name':self.name, 'event-tree':self.event_tree_name})
 
             # Append each parsed object (XML element) to the root
             if isinstance(parsed_objects, (list, tuple)):
