@@ -6,19 +6,25 @@ class XMLDumper:
     def __init__(self, name, event_tree_name):
         self.name = name
         self.event_tree_name = event_tree_name
+        self.fault_tree_name_list = []
 
-    def dump_object_to_xml(self, parsed_objects, file_path):
+    def dump_object_to_xml(self, generated_objects, file_path):
         try:
             # Create a root element for the XML tree
             root = ET.Element('opsa-mef')
             initating_event_element= ET.SubElement(root, 'initating-event', {'name':self.name, 'event-tree':self.event_tree_name})
 
             # Append each parsed object (XML element) to the root
-            if isinstance(parsed_objects, (list, tuple)):
-                for parsed_object in parsed_objects:
-                    root.append(parsed_object)
+            if isinstance(generated_objects, (list, tuple)):
+                for generated_object in generated_objects:
+                    root.append(generated_object)
             else:
-                root.append(parsed_objects)
+                root.append(generated_objects)
+
+            for fault_tree_name in self.fault_tree_name_list:
+                fault_tree_element = ET.SubElement(root, 'define-fault-tree', {'name':fault_tree_name})
+
+            model_data_element= ET.SubElement(root,'model-data' )
 
             # Create ElementTree object with the root element
             tree = ET.ElementTree(root)
