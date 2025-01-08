@@ -64,7 +64,6 @@ def main ():
 
     generate_et(number_of_functional_events)
 
-
     #4.dump pra mode
     convert_to_xml()
 
