@@ -20,7 +20,20 @@ def generate_et(number_of_functional_events):
     a= event_tree.to_xml()
     open_psa_model_directory = './../models/open-psa/event_tree.xml'
     initiating_event_name= f'INIT{number_of_functional_events}'
+    fault_tree_name_list=[]
+    for functional_event in range(number_of_functional_events):
+
+        argv = [
+            '--ft-name',  'FT'+ str(functional_event + 1),
+            '--root', 'TOP',
+            '-b', str(functional_event + 100),
+            '-o', str(open_psa_model_directory) + 'test' + str(functional_event + 1) + '.xml',
+            ]
+        print('Generated command line arguments: ', argv)
+        # generate_ft(argv)
+        fault_tree_name_list.append(argv[1])
     xml_dumper =XMLDumper(initiating_event_name, event_tree_name)
+    xml_dumper.fault_tree_name_list=fault_tree_name_list
     xml_dumper.dump_object_to_xml(a,open_psa_model_directory)
 
 def generate_ft(argv=None):
@@ -50,17 +63,7 @@ def main ():
     #3.generate pra model
 
     generate_et(number_of_functional_events)
-    for functional_event in range(number_of_functional_events):
 
-        argv = [
-            '--ft-name',  'FT'+ str(functional_event + 1),
-            '--root', 'TOP',
-            '-b', str(functional_event + 100),
-            '-o', str(open_psa_model_directory) + 'test' + str(functional_event + 1) + '.xml',
-            ]
-        print('Generated command line arguments: ', argv)
-
-        generate_ft(argv)
 
     #4.dump pra mode
     convert_to_xml()
