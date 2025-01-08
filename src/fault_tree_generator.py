@@ -5,6 +5,7 @@ import numpy
 import random
 import math
 import sys
+import io
 import json
 import itertools
 import argparse as ap
@@ -1279,7 +1280,7 @@ def fault_tree_generator(argv=None):
     args = manage_cmd_args(argv)
     factors = setup_factors(args)
     fault_tree = generate_fault_tree(args.ft_name, args.root, factors)
-    printer = get_printer(args.out)
+    printer, captured_object = get_printer(args.out)
     if args.aralia:
         fault_tree.to_aralia(printer)
     elif args.SAPHIRE_json_object:
@@ -1293,19 +1294,35 @@ def fault_tree_generator(argv=None):
         write_info_JSON_printer(fault_tree, printer, args.seed)
         fault_tree.to_SAPHIRE_json_printer(printer, args.nest)
     else:
-        write_info(fault_tree, printer, args.seed)
-        write_summary(fault_tree, printer)
+        # write_info(fault_tree, printer, args.seed)
+        # write_summary(fault_tree, printer)
         fault_tree.to_xml(printer, args.nest)
+    # print(captured_object.getvalue())
+    return captured_object.getvalue()
 
+
+# def get_printer(file_path=None):
+#     """Returns printer to stream output."""
+#     destination = open(file_path, 'w') if file_path else sys.stdout
+#
+#     def _print(*args):
+#         print(*args, file=destination, sep='')
+#
+#     return _print
 
 def get_printer(file_path=None):
     """Returns printer to stream output."""
-    destination = open(file_path, 'w') if file_path else sys.stdout
+    if file_path:
+        destination = open(file_path, 'w')
+    else:
+        # Use StringIO to capture output in a string
+        destination = io.StringIO()
 
     def _print(*args):
         print(*args, file=destination, sep='')
 
-    return _print
+    # Return both the print function and the captured content
+    return _print, destination
 
 
 # if __name__ == "__main__":

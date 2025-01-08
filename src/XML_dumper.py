@@ -7,6 +7,8 @@ class XMLDumper:
         self.name = name
         self.event_tree_name = event_tree_name
         self.fault_tree_name_list = []
+        self.fault_tree_element_list =[]
+        self.model_data = None
 
     def dump_object_to_xml(self, generated_objects, file_path):
         try:
@@ -21,8 +23,15 @@ class XMLDumper:
             else:
                 root.append(generated_objects)
 
-            for fault_tree_name in self.fault_tree_name_list:
-                fault_tree_element = ET.SubElement(root, 'define-fault-tree', {'name':fault_tree_name})
+            # Loop through fault tree names and elements, appending them as sub-elements
+            for fault_tree_name, fault_tree_content in zip(self.fault_tree_name_list, self.fault_tree_element_list):
+                # Fault tree content may be a string, so we need to convert it to an XML element
+                if isinstance(fault_tree_content, str):
+                    fault_tree_content = ET.fromstring(fault_tree_content)
+
+                # Create the 'define-fault-tree' element and append the fault tree content
+                fault_tree_element = ET.SubElement(root, 'define-fault-tree', {'name': fault_tree_name})
+                fault_tree_element.append(fault_tree_content)
 
             model_data_element= ET.SubElement(root,'model-data' )
 
@@ -46,4 +55,3 @@ class XMLDumper:
                 xml_file.write(unescaped_xml)
         except Exception as e:
             print(f"Error dumping XML object to file {file_path}: {e}")
-

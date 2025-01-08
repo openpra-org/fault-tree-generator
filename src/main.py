@@ -18,28 +18,33 @@ def generate_et(number_of_functional_events):
     event_tree.functional_events_name=functional_events
     event_tree.sequences=sequences
     a= event_tree.to_xml()
-    open_psa_model_directory = './../models/open-psa/event_tree.xml'
+    open_psa_model_directory = './../models/open-psa/'
+    open_psa_et_model_directory = './../models/open-psa/event_tree.xml'
     initiating_event_name= f'INIT{number_of_functional_events}'
     fault_tree_name_list=[]
+    fault_tree_element_list =[]
     for functional_event in range(number_of_functional_events):
 
         argv = [
             '--ft-name',  'FT'+ str(functional_event + 1),
             '--root', 'TOP',
             '-b', str(functional_event + 100),
-            '-o', str(open_psa_model_directory) + 'test' + str(functional_event + 1) + '.xml',
+            # '-o', str(open_psa_model_directory) + 'test' + str(functional_event + 1) + '.xml'
             ]
         print('Generated command line arguments: ', argv)
         # generate_ft(argv)
         fault_tree_name_list.append(argv[1])
+        fault_tree_element_list.append(generate_ft(argv))
+    print(f'Fault tree element: ==={fault_tree_element_list}')
     xml_dumper =XMLDumper(initiating_event_name, event_tree_name)
     xml_dumper.fault_tree_name_list=fault_tree_name_list
-    xml_dumper.dump_object_to_xml(a,open_psa_model_directory)
+    xml_dumper.fault_tree_element_list=fault_tree_element_list
+    xml_dumper.dump_object_to_xml(a,open_psa_et_model_directory)
 
 def generate_ft(argv=None):
     print("Generating fault tree...")
     try:
-        fault_tree =fault_tree_generator(argv)
+        return fault_tree_generator(argv)
     except ap.ArgumentTypeError as err:
         print('Argument Error: \n' + str(err))
         sys.exit(2)
