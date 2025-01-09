@@ -14,7 +14,7 @@ class XMLDumper:
         try:
             # Create a root element for the XML tree
             root = ET.Element('opsa-mef')
-            initating_event_element= ET.SubElement(root, 'initating-event', {'name':self.name, 'event-tree':self.event_tree_name})
+            initating_event_element= ET.SubElement(root, 'define-initiating-event', {'name':self.name, 'event-tree':self.event_tree_name})
 
             # Append each parsed object (XML element) to the root
             if isinstance(generated_objects, (list, tuple)):
