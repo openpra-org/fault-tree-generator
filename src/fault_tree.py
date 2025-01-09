@@ -342,7 +342,7 @@ class Gate(Event):  # pylint: disable=too-many-instance-attributes
                 mef_xml += "</" + gate.operator + ">"
             return mef_xml
 
-        printer('<define-gate name="', self.name, '">')
+        printer('<define-gate name="', self.name,'"',' role="private"', '>')
         printer(convert_formula(self, nest))
         printer('</define-gate>')
 
