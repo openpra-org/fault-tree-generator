@@ -18,7 +18,7 @@ def generate_et(number_of_functional_events):
     event_tree.functional_events_name=functional_events
     event_tree.sequences=sequences
     a= event_tree.to_xml()
-    open_psa_et_model_directory = './../models/open-psa/event_tree.xml'
+    open_psa_et_model_directory = './../models/open-psa/event_tree_demo_'+str(number_of_functional_events) +'FE'+'.xml'
     initiating_event_name= f'INIT{number_of_functional_events}'
     fault_tree_name_list=[]
     fault_tree_logic_list=[]
