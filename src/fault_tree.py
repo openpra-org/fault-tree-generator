@@ -790,8 +790,8 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
             printer: The output stream.
             nest: A nesting factor for the Boolean formulae.
         """
-        # printer('<opsa-mef>')
-        # printer('<define-fault-tree name="', self.name, '">')
+        printer('<opsa-mef>')
+        printer('<define-fault-tree name="', self.name, '">')
 
         sorted_gates = toposort_gates(self.top_gates or [self.top_gate],
                                       self.gates)
@@ -800,20 +800,43 @@ class FaultTree:  # pylint: disable=too-many-instance-attributes
 
         for ccf_group in self.ccf_groups:
             ccf_group.to_xml(printer)
-        # printer('</define-fault-tree>')
+        printer('</define-fault-tree>')
 
-        # printer('<model-data>')
+        printer('<model-data>')
 
-        # for basic_event in (self.non_ccf_events
-        #                     if self.ccf_groups else self.basic_events):
-        #     basic_event.to_xml(printer)
+        for basic_event in (self.non_ccf_events
+                            if self.ccf_groups else self.basic_events):
+            basic_event.to_xml(printer)
 
 
 
-        # for house_event in self.house_events:
-            # house_event.to_xml(printer)
-        # printer('</model-data>')
-        # printer('</opsa-mef>')
+        for house_event in self.house_events:
+            house_event.to_xml(printer)
+        printer('</model-data>')
+        printer('</opsa-mef>')
+
+    def to_fault_tree_logic(self, printer, nest=False):
+        printer('<define-fault-tree name="', self.name, '">')
+
+        sorted_gates = toposort_gates(self.top_gates or [self.top_gate],
+                                      self.gates)
+        for gate in sorted_gates:
+            gate.to_xml(printer, nest)
+
+        for ccf_group in self.ccf_groups:
+            ccf_group.to_xml(printer)
+        printer('</define-fault-tree>')
+
+        printer('<model-data>')
+
+        for basic_event in (self.non_ccf_events
+        if self.ccf_groups else self.basic_events):
+            basic_event.to_xml(printer)
+
+        for house_event in self.house_events:
+            house_event.to_xml(printer)
+        printer('</model-data>')
+
 
     def to_aralia(self, printer):
         """Produces the Aralia definition of the fault tree.
