@@ -1,5 +1,8 @@
 # PRA Model Generator
 
+<a href="https://doi.org/10.5281/zenodo.15297977"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.15297977.svg" alt="DOI"></a>
+
+
 This repository includes Probabilistic Risk Assessment (PRA) model generation source code,
 schema for different model format, and additional scripts to automate model generation.
 
