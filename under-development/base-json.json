@@ -1,0 +1,176 @@
+{
+  "version": "1.0",
+  "saphiresolveinput": {
+    "header": {
+      "projectpath": "\"C:\\Users\\ARASEM\\Desktop\\egemen\\SAPHIRE\\BENCHMARKING-OF-PRA-TOOLS\"",
+      "eventtree": {
+        "name": "B1FE-1FT-ET",
+        "number": 3,
+        "initevent": 5,
+        "seqphase": 1
+      },
+      "flagnum": 0,
+      "ftcount": 1,
+      "fthigh": 16,
+      "sqcount": 1,
+      "sqhigh": 2,
+      "becount": 7,
+      "behigh": 80,
+      "mthigh": 1,
+      "phhigh": 1,
+      "truncparam": {
+        "ettruncopt": "NormalProbCutOff",
+        "fttruncopt": "GlobalProbCutOff",
+        "sizeopt": "ENoTrunc",
+        "ettruncval": 1.000E-12,
+        "fttruncval": 1.000E-12,
+        "sizeval": 99,
+        "transrepl": false,
+        "transzones": false,
+        "translevel": 0,
+        "usedual": false,
+        "dualcutoff": 0.000E+00
+      },
+      "workspacepair": {
+        "ph": 1,
+        "mt": 1
+      },
+      "iworkspacepair": {
+        "ph": 1,
+        "mt": 1
+      }
+    },
+    "sysgatelist": [
+      {
+        "name": "FE-1-FT-LINKED",
+        "id": 16,
+        "gateid": 15,
+        "gateorig": 15,
+        "gatepos": 0,
+        "eventid": 78,
+        "gatecomp": 15,
+        "comppos": 0,
+        "compflag": " ",
+        "gateflag": " ",
+        "gatet": " ",
+        "bddsuccess": false,
+        "done": false
+      }
+      ],
+    "faulttreelist": [
+    {
+      "ftheader": {
+        "ftid": 16,
+        "gtid": 15,
+        "evid": 78,
+        "defflag": 0,
+        "numgates": 1
+      },
+      "gatelist": [
+        {
+          "gateid": 15,
+          "gatetype": "and",
+          "numinputs": 2,
+          "eventinput": [
+             79,
+             80
+          ]
+      }
+      ]
+   }
+   ],
+  "eventlist": [
+    {
+    "id": "1",
+    "corrgate": "0",
+    "name": "<TRUE>",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 1.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "1"
+    },
+    {
+    "id": "2",
+    "corrgate": "0",
+    "name": "<FALSE>",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 0.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "1"
+    },
+    {
+    "id": "3",
+    "corrgate": "0",
+    "name": "<PASS>",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 1.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "1"
+    },
+    {
+    "id": "5",
+    "corrgate": "0",
+    "name": "INIT-EV",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 1.00000E+00,
+    "initf": "I",
+    "processf": " ",
+    "calctype": "N"
+    },
+    {
+    "id": "78",
+    "corrgate": "15",
+    "name": "FE-1-FT-LINKED",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 1.00000E+00,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "1"
+    },
+    {
+    "id": "79",
+    "corrgate": "0",
+    "name": "FE-1-FT-LINKED0",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 1.00000E-01,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "1"
+    },
+    {
+    "id": "80",
+    "corrgate": "0",
+    "name": "FE-1-FT-LINKED1",
+    "evworkspacepair": {
+      "ph": 1,
+      "mt": 1
+    },
+    "value": 1.00000E-01,
+    "initf": " ",
+    "processf": " ",
+    "calctype": "1"
+    }
+  ]
+}
+}

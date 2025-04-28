@@ -19,5 +19,5 @@ setuptools.setup(
     ],
     install_requires=['argparse', 'setuptools'],
     test_suite='nose.collector',
-    tests_require=['nose', 'typing', 'argparse', 'coverage'],
+    tests_require=['nose', 'typing', 'argparse', 'coverage', 'lxml', 'pytest'],
 )
